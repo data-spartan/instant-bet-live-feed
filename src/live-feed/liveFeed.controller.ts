@@ -10,4 +10,9 @@ export class LiveFeedController {
   async liveData(@Payload() data) {
     this.liveFeedService.insertFeed(data);
   }
+
+  @EventPattern('live_feed_resolved')
+  async liveResolved(@Payload() data) {
+    this.liveFeedService.insertFeed(data);
+  }
 }

@@ -10,7 +10,6 @@ import { LiveFeedResolvedModule } from './live-feed-resolved/liveFeedResolved.mo
 @Module({
   imports: [
     LiveFeedModule,
-    LiveFeedResolvedModule,
     MongooseModule.forRoot('mongodb://localhost/live-feed'),
   ],
   controllers: [AppController],

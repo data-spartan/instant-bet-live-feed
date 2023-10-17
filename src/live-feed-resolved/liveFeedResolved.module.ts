@@ -19,9 +19,13 @@ import { LiveFeed, LiveFeedSchema } from 'src/database/schemas/liveFeed.schema';
             clientId: 'live-feed-resolved',
             brokers: ['localhost:9092'],
           },
+          // subscribe: {
+          //   topics: ['live_feed_resolved'],
+          //   fromBeginning: true,
+          // },
           // producerOnlyMode: true,
           consumer: {
-            groupId: 'live-feed-resolved-consumer',
+            groupId: 'live-feed-consumer',
           },
         },
       },
