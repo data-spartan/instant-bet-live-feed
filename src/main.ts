@@ -1,12 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { ClientKafka } from '@nestjs/microservices';
 import { AppModule } from './app.module';
-import { ConsumerSubscribeTopics } from 'kafkajs';
+import { KafkaOptions } from './interfaces/kafkaOptions.interfaces';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.connectMicroservice<any>({
+  app.connectMicroservice<KafkaOptions>({
     transport: Transport.KAFKA,
     options: {
       client: {
@@ -22,25 +21,7 @@ async function bootstrap() {
       },
     },
   });
-  // app.connectMicroservice<any>({
-  //   transport: Transport.KAFKA,
-  //   options: {
-  //     client: {
-  //       clientId: 'live-feed-resolved',
-  //       brokers: ['localhost:9092'],
-  //     },
-  //   },
-  //   consumer: {
-  //     groupId: 'live-feed-resolved-consumer',
-  //   },
-  //   subscribe: {
-  //     topics: ['live_feed_resolved'],
-  //     fromBeginning: true,
-  //   },
-  // });
 
-  // await microservice.listen();
-  // await microservice2.listen();
   await app.startAllMicroservices();
   await app.listen(3000);
 }

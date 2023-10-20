@@ -6,13 +6,13 @@ export type LiveFeedDocument = HydratedDocument<LiveFeed>;
 @Schema({ timestamps: { createdAt: true, updatedAt: false } })
 export class LiveFeed {
   @Prop({ required: true })
+  _id: number;
+
+  @Prop({ required: true })
   source: string;
 
   @Prop({ required: true })
   type: string;
-
-  @Prop({ required: true })
-  fixtureId: number;
 
   @Prop({ required: true })
   competitionString: string;
@@ -53,16 +53,16 @@ export class LiveFeed {
   @Prop({ required: true })
   timeSent: number;
 
-  @Prop({ type: [Object] })
-  games: object[];
+  @Prop({ type: Object })
+  scoreboard: object;
 
   @Prop({ type: [Object] })
-  resolved: string[];
+  games: object[];
 }
 
 const LiveFeedSchema = SchemaFactory.createForClass(LiveFeed);
 
-LiveFeedSchema.index({ fixtureId: 1 });
-LiveFeedSchema.index({ createdAt: 1 }, { expireAfterSeconds: 60 });
+// LiveFeedSchema.index({ fixtureId: 1 });
+LiveFeedSchema.index({ createdAt: 1 }, { expireAfterSeconds: 120 });
 
 export { LiveFeedSchema };

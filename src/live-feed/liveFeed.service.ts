@@ -1,29 +1,37 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { ClientKafka } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
   LiveFeed,
   LiveFeedDocument,
 } from 'src/database/schemas/liveFeed.schema';
+import {
+  LiveFeedResolved,
+  LiveFeedResolvedDocument,
+} from 'src/database/schemas/liveFeedResolved.schema';
 
 @Injectable()
 export class LiveFeedService {
   constructor(
     @InjectModel(LiveFeed.name)
-    private readonly liveFeedModel: Model<LiveFeedDocument>,
+    private readonly feedRepo: Model<LiveFeedDocument>,
+    @InjectModel(LiveFeedResolved.name)
+    private readonly resolvedRepo: Model<LiveFeedResolvedDocument>,
+    @Inject('LIVE_FEED_MICROSERVICE') private readonly liveFeed: ClientKafka,
   ) {}
-  insertFeed(feed: any) {
+  public async insertFeed(feed: any) {
     const updateArr = feed.map((obj) => ({
       updateOne: {
         filter: {
-          fixtureId: obj.fixtureId,
+          _id: obj.fixtureId,
         },
 
         update: {
           $setOnInsert: {
+            _id: obj.fixtureId,
             source: obj.source,
             type: obj.type,
-            fixtureId: obj.fixtureId,
             competitionString: obj.competitionString,
             region: obj.region,
             regionId: obj.regionId,
@@ -38,8 +46,8 @@ export class LiveFeedService {
             competitor2: obj.competitor2,
           },
           $set: {
+            scoreboard: obj.scoreboard,
             games: obj.games,
-            resolved: obj.resolved,
             timeSent: obj.time,
           },
         },
@@ -48,6 +56,38 @@ export class LiveFeedService {
         // setDefaultsOnInsert: true,
       },
     }));
-    this.liveFeedModel.bulkWrite(updateArr);
+    this.feedRepo.bulkWrite(updateArr);
+  }
+
+  public async insertResolved(resolved: any) {
+    const toResolveTickets = [];
+    const updateArr = resolved.map((obj) => ({
+      updateOne: {
+        filter: {
+          fixtureId: obj.fixtureId,
+        },
+        update: {
+          $setOnInsert: {
+            fixtureId: obj.fixtureId,
+          },
+          $set: {
+            status:
+              obj.status !== 'Ended'
+                ? obj.status
+                : toResolveTickets.push(obj.fixtureId) && obj.status,
+          },
+          $push: {
+            resolved: {
+              $each: obj.resolved,
+            },
+          },
+        },
+        upsert: true,
+        // setDefaultsOnInsert: true,
+      },
+    }));
+
+    await this.resolvedRepo.bulkWrite(updateArr);
+    this.liveFeed.emit('resolve_tickets', toResolveTickets);
   }
 }
