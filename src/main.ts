@@ -1,30 +1,29 @@
-/**
- * This is not a production server yet!
- * This is only a minimal backend to get started.
- */
-
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-
 import { AppModule } from './app.module';
+import { KafkaOptions } from './interfaces/kafkaOptions.interfaces';
 
 async function bootstrap() {
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
-    {
-      transport: Transport.KAFKA,
-
-      options: {
-        client: {
-          brokers: ['localhost:9092'],
-        },
-        consumer: {
-          groupId: 'live-feed-consumer',
-        },
+  const app = await NestFactory.create(AppModule);
+  app.connectMicroservice<KafkaOptions>({
+    transport: Transport.KAFKA,
+    options: {
+      client: {
+        clientId: 'live-feed',
+        brokers: ['localhost:9092'],
+      },
+      consumer: {
+        groupId: 'live-feed-consumer',
+      },
+      subscribe: {
+        topics: ['live_feed', 'live_feed_resolved'],
+        fromBeginning: false,
       },
     },
-  );
-  await app.listen();
+  });
+
+  await app.startAllMicroservices();
+  await app.listen(3000);
 }
 
 bootstrap();
