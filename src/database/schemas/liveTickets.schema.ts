@@ -2,11 +2,10 @@ import { Schema, SchemaFactory, Prop } from '@nestjs/mongoose';
 import { LiveFeed, LiveFeedDocument, LiveFeedSchema } from './liveFeed.schema';
 import * as mongoose from 'mongoose';
 
-export type LiveFeedResolvedDocument =
-  mongoose.HydratedDocument<LiveFeedResolved>;
+export type LiveTicketsDocument = mongoose.HydratedDocument<LiveTickets>;
 
 @Schema({ timestamps: { createdAt: true, updatedAt: false } })
-export class LiveFeedResolved {
+export class LiveTickets {
   // @Prop({ required: true })
   // fixtureId: number;
   @Prop({ type: Number, ref: 'LiveFeed' })
@@ -19,9 +18,9 @@ export class LiveFeedResolved {
   status: string;
 }
 
-const LiveFeedResolvedSchema = SchemaFactory.createForClass(LiveFeedResolved);
+const LiveTicketsSchema = SchemaFactory.createForClass(LiveTickets);
 
 // LiveFeedResolvedSchema.index({ fixtureId: 1 });
-// LiveFeedResolvedSchema.index({ createdAt: 1 }, { expireAfterSeconds: 120 });
+// LiveTicketsSchema.index({ createdAt: 1 }, { expireAfterSeconds: 120 });
 
-export { LiveFeedResolvedSchema };
+export { LiveTicketsSchema };

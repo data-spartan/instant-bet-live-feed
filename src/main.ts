@@ -10,15 +10,15 @@ async function bootstrap() {
     options: {
       client: {
         clientId: 'live-feed',
-        brokers: ['localhost:9092'],
+        brokers: ['localhost:9092', 'localhost:9092'],
       },
       consumer: {
         groupId: 'live-feed-consumer',
       },
-      subscribe: {
-        topics: ['live_feed', 'live_feed_resolved'],
-        fromBeginning: false,
-      },
+      // subscribe: {
+      //   topics: ['live_feed', 'live_feed_resolved', 'resolve_tickets'],
+      //   fromBeginning: false,
+      // },
     },
   });
 

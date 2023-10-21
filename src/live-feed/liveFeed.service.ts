@@ -1,7 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ClientKafka } from '@nestjs/microservices';
+import { ClientKafka, KafkaRetriableException } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, MongooseError } from 'mongoose';
+import { Exception } from 'sass';
 import {
   LiveFeed,
   LiveFeedDocument,
@@ -18,7 +19,6 @@ export class LiveFeedService {
     private readonly feedRepo: Model<LiveFeedDocument>,
     @InjectModel(LiveFeedResolved.name)
     private readonly resolvedRepo: Model<LiveFeedResolvedDocument>,
-    @Inject('LIVE_FEED_MICROSERVICE') private readonly liveFeed: ClientKafka,
   ) {}
   public async insertFeed(feed: any) {
     const updateArr = feed.map((obj) => ({
@@ -64,7 +64,7 @@ export class LiveFeedService {
     const updateArr = resolved.map((obj) => ({
       updateOne: {
         filter: {
-          fixtureId: obj.fixtureId,
+          _id: obj.fixtureId,
         },
         update: {
           $setOnInsert: {
@@ -83,11 +83,17 @@ export class LiveFeedService {
           },
         },
         upsert: true,
-        // setDefaultsOnInsert: true,
       },
     }));
+    try {
+      await this.resolvedRepo.bulkWrite(updateArr);
+      return toResolveTickets;
+    } catch (e) {
+      throw new MongooseError(e.message);
+    }
+  }
 
-    await this.resolvedRepo.bulkWrite(updateArr);
-    this.liveFeed.emit('resolve_tickets', toResolveTickets);
+  public async resolveTickets(resolvedId: number[]) {
+    // this.resolvedRepo
   }
 }

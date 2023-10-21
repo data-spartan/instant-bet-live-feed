@@ -5,6 +5,8 @@ import { AppService } from './app.service';
 // import { LiveFeedController } from './live-feed/liveFeed.controller';
 import { AppController } from './app.controller';
 import { MongooseModule } from '@nestjs/mongoose';
+import { APP_FILTER } from '@nestjs/core';
+import { KafkaExceptionFilter } from './exception-filters/kafkaException.filter';
 
 @Module({
   imports: [
@@ -12,6 +14,12 @@ import { MongooseModule } from '@nestjs/mongoose';
     MongooseModule.forRoot('mongodb://localhost/live-feed'),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER,
+      useClass: KafkaExceptionFilter,
+    },
+  ],
 })
 export class AppModule {}

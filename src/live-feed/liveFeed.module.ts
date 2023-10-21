@@ -1,5 +1,10 @@
 import { Module } from '@nestjs/common';
-import { ClientsModule, Transport } from '@nestjs/microservices';
+import {
+  Client,
+  ClientKafka,
+  ClientsModule,
+  Transport,
+} from '@nestjs/microservices';
 import { LiveFeedService } from './liveFeed.service';
 import { LiveFeedController } from './liveFeed.controller';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -8,6 +13,7 @@ import {
   LiveFeedResolved,
   LiveFeedResolvedSchema,
 } from 'src/database/schemas/liveFeedResolved.schema';
+import { KafkaOptions } from 'src/interfaces/kafkaOptions.interfaces';
 
 @Module({
   imports: [
@@ -21,7 +27,6 @@ import {
         transport: Transport.KAFKA,
         options: {
           client: {
-            clientId: 'live-feed',
             brokers: ['localhost:9092', 'localhost:9093'],
           },
           // producerOnlyMode: true,
@@ -31,10 +36,10 @@ import {
           },
         },
       },
+      // client: ClientKafka
     ]),
   ],
   providers: [LiveFeedService],
   controllers: [LiveFeedController],
-  // exports: [LiveFeedController],
 })
 export class LiveFeedModule {}

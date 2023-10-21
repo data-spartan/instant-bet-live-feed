@@ -7,6 +7,7 @@ import {
 } from 'kafkajs';
 
 export interface KafkaOptions {
+  name?: string;
   transport?: Transport.KAFKA;
   options?: {
     client?: KafkaConfig;
