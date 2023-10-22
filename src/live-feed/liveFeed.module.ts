@@ -14,7 +14,7 @@ import {
   LiveFeedResolvedSchema,
 } from 'src/database/schemas/liveFeedResolved.schema';
 import { KafkaOptions } from 'src/interfaces/kafkaOptions.interfaces';
-import { TestConsumer } from 'src/kafka/createConsumer';
+// import { CreateConsumer } from 'src/kafka/createConsumer';
 import { Kafka } from 'kafkajs';
 import { KafkaModule } from 'src/kafka/kafka.module';
 
@@ -43,7 +43,7 @@ import { KafkaModule } from 'src/kafka/kafka.module';
     //   // client: ClientKafka
     // ]),
   ],
-  providers: [LiveFeedService, TestConsumer],
+  providers: [LiveFeedService],
   controllers: [LiveFeedController],
 })
 export class LiveFeedModule {}

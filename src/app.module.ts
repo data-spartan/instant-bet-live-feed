@@ -8,11 +8,9 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { APP_FILTER } from '@nestjs/core';
 import { KafkaExceptionFilter } from './exception-filters/kafkaException.filter';
 import { KafkaModule } from './kafka/kafka.module';
-import { TestConsumer } from './kafka/createConsumer';
 
 @Module({
   imports: [
-    KafkaModule,
     LiveFeedModule,
     ConfigModule.forRoot({ isGlobal: true }),
     MongooseModule.forRoot('mongodb://localhost/live-feed'),
@@ -20,7 +18,6 @@ import { TestConsumer } from './kafka/createConsumer';
   controllers: [AppController],
   providers: [
     AppService,
-    TestConsumer,
     {
       provide: APP_FILTER,
       useClass: KafkaExceptionFilter,

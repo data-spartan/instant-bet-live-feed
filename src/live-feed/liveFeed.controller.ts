@@ -6,17 +6,19 @@ import {
   EventPattern,
   KafkaContext,
   Payload,
+  MessageHandler,
 } from '@nestjs/microservices';
+import { SubscribeTo } from 'src/kafka/kafka.decorator';
 
 @Controller('feed')
 export class LiveFeedController {
   constructor(
-    private readonly liveFeedService: LiveFeedService,
-  ) // @Inject('LIVE_FEED_MICROSERVICE') private readonly liveFeed: ClientKafka,
-  {}
+    private readonly liveFeedService: LiveFeedService, // @Inject('LIVE_FEED_MICROSERVICE') private readonly liveFeed: ClientKafka,
+  ) {}
 
-  @EventPattern('live_feed')
+  @SubscribeTo('live_feed')
   async liveData(@Payload() data) {
+    console.log(data);
     this.liveFeedService.insertFeed(data);
   }
 

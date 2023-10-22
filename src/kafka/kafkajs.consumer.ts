@@ -27,7 +27,7 @@ export class KafkajsConsumer implements IConsumer {
     this.logger = new Logger(`${topic.topic}-${config.groupId}`);
   }
 
-  async consume(onMessage: (message: KafkaMessage) => Promise<void>) {
+  async consume(onMessage: (message: KafkaMessage) => Promise<Object>) {
     await this.consumer.subscribe(this.topic);
     console.log('STEFAN');
     await this.consumer.run({
