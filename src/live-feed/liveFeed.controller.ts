@@ -18,11 +18,12 @@ export class LiveFeedController {
 
   @SubscribeTo('live_feed')
   async liveData(@Payload() data) {
-    console.log(data);
-    this.liveFeedService.insertFeed(data);
+    console.log('STEFAN', data[0]);
+    console.log(this.liveFeedService);
+    // this.liveFeedService.insertFeed(data);
   }
 
-  @EventPattern('live_resolved')
+  @SubscribeTo('live_resolved')
   async liveResolved(@Payload() data, @Ctx() context: KafkaContext) {
     const toResolveTickets = await this.liveFeedService.insertResolved(data);
     if (toResolveTickets)

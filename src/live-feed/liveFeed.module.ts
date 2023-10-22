@@ -45,5 +45,6 @@ import { KafkaModule } from 'src/kafka/kafka.module';
   ],
   providers: [LiveFeedService],
   controllers: [LiveFeedController],
+  // exports: [LiveFeedService],
 })
 export class LiveFeedModule {}

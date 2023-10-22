@@ -1,61 +1,63 @@
 import {
   Injectable,
-  OnApplicationBootstrap,
-  OnApplicationShutdown,
   OnModuleInit,
+  OnApplicationShutdown,
+  OnApplicationBootstrap,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ConsumerConfig, ConsumerSubscribeTopic, KafkaMessage } from 'kafkajs';
-// import { DatabaseService } from '../database/database.service';
+import {
+  Consumer,
+  ConsumerConfig,
+  ConsumerSubscribeTopic,
+  KafkaMessage,
+} from 'kafkajs';
 import { IConsumer } from './consumer.interface';
 import { KafkajsConsumer } from './kafkajs.consumer';
-
-interface KafkajsConsumerOptions {
-  topic: ConsumerSubscribeTopic;
-  config: ConsumerConfig;
-  onMessage: (message: KafkaMessage) => Promise<void>;
-}
+import {
+  SUBSCRIBER_FN_REF_MAP,
+  SUBSCRIBER_OBJ_REF_MAP,
+} from './kafka.decorator';
 
 @Injectable()
 export class ConsumerService implements OnModuleInit, OnApplicationShutdown {
   private readonly consumers: IConsumer[] = [];
-
-  constructor(
-    private readonly configService: ConfigService, // private readonly consumersNum: number, // private readonly databaserService: DatabaseService,
-  ) {}
-
-  async onModuleInit() {
-    const onMessage = async (message): Promise<Object> => {
-      console.log(message.value);
-      return {
-        value: message.value.toString(),
-      };
-      // throw new Error('Test error!');
-    };
-    const consumer = new KafkajsConsumer(
-      { topic: 'live_feed' },
-      // this.databaserService,
-      { groupId: 'test-consumer' },
-      this.configService.get('KAFKA_BROKER'),
-    );
-    await consumer.connect();
-    await consumer.consume(onMessage);
-    this.consumers.push(consumer);
+  private readonly numConsumers;
+  constructor(private readonly configService: ConfigService) {
+    this.numConsumers = 2;
   }
 
-  // async consume({ topic, config, onMessage }: KafkajsConsumerOptions) {
-  //   const consumer = new KafkajsConsumer(
-  //     topic,
-  //     // this.databaserService,
-  //     config,
-  //     this.configService.get('KAFKA_BROKER'),
-  //   );
-  //   await consumer.connect();
-  //   await consumer.consume(onMessage);
-  //   this.consumers.push(consumer);
-  // }
+  async onModuleInit() {
+    for (let step = 0; step < 2; step++) {
+      const consumer = new KafkajsConsumer(
+        // { topic: 'live_feed' },
+        { groupId: 'test-consumer' },
+        this.configService.get('KAFKA_BROKER'),
+      );
+      await consumer.connect();
 
-  async onApplicationShutdown() {
+      SUBSCRIBER_FN_REF_MAP.forEach((functionRef, topic) => {
+        this.bindTopicToConsumer(functionRef, topic, consumer);
+      });
+
+      consumer.run_({
+        eachMessage: async ({ topic, partition, message }) => {
+          const functionRef = SUBSCRIBER_FN_REF_MAP.get(topic);
+          const object = SUBSCRIBER_OBJ_REF_MAP.get(topic);
+          await functionRef.apply(object, [
+            JSON.parse(message.value.toString()),
+          ]);
+        },
+      });
+
+      this.consumers.push(consumer);
+    }
+  }
+
+  async bindTopicToConsumer(callback, topic, consumer: KafkajsConsumer) {
+    await consumer.subscribe_({ topic, fromBeginning: false });
+  }
+
+  async onApplicationShutdown(signal?: string) {
     for (const consumer of this.consumers) {
       await consumer.disconnect();
     }
