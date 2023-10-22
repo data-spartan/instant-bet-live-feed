@@ -62,7 +62,7 @@ export class LiveFeed {
 
 const LiveFeedSchema = SchemaFactory.createForClass(LiveFeed);
 
-// LiveFeedSchema.index({ fixtureId: 1 });
-LiveFeedSchema.index({ createdAt: 1 }, { expireAfterSeconds: 120 });
+LiveFeedSchema.index({ 'games.sourceGameId': 1 });
+// LiveFeedSchema.index({ createdAt: 1 }, { expireAfterSeconds: 120 });
 
 export { LiveFeedSchema };
