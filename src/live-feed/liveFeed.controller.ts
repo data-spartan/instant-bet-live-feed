@@ -12,8 +12,8 @@ import {
 export class LiveFeedController {
   constructor(
     private readonly liveFeedService: LiveFeedService,
-    @Inject('LIVE_FEED_MICROSERVICE') private readonly liveFeed: ClientKafka,
-  ) {}
+  ) // @Inject('LIVE_FEED_MICROSERVICE') private readonly liveFeed: ClientKafka,
+  {}
 
   @EventPattern('live_feed')
   async liveData(@Payload() data) {
@@ -24,7 +24,8 @@ export class LiveFeedController {
   async liveResolved(@Payload() data, @Ctx() context: KafkaContext) {
     const toResolveTickets = await this.liveFeedService.insertResolved(data);
     if (toResolveTickets)
-      this.liveFeed.emit('resolve_tickets', toResolveTickets);
+      // this.liveFeed.emit('resolve_tickets', toResolveTickets);
+      null;
   }
 
   @EventPattern('resolve_tickets')

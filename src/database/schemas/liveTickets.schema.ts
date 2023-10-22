@@ -9,7 +9,7 @@ export class LiveTickets {
   // @Prop({ required: true })
   // fixtureId: number;
   @Prop({ type: Number, ref: 'LiveFeed' })
-  _id: number;
+  fixtureId: number;
 
   @Prop({ type: [Object] })
   resolved: Object[];
