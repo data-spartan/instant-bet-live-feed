@@ -24,15 +24,15 @@ import { KafkaModule } from 'src/kafka/kafka.module';
       { name: LiveFeed.name, schema: LiveFeedSchema },
       { name: LiveFeedResolved.name, schema: LiveFeedResolvedSchema },
     ]),
-    KafkaModule,
     // ClientsModule.register([
     //   {
-    //     name: 'LIVE_FEED_MICROSERVICE',
+    //     name: 'LIVE_FEED',
     //     transport: Transport.KAFKA,
     //     options: {
     //       client: {
     //         brokers: ['localhost:9092', 'localhost:9093'],
     //       },
+
     //       // producerOnlyMode: true,
     //       consumer: {
     //         groupId: 'live-feed-consumer',
@@ -40,7 +40,6 @@ import { KafkaModule } from 'src/kafka/kafka.module';
     //       },
     //     },
     //   },
-    //   // client: ClientKafka
     // ]),
   ],
   providers: [LiveFeedService],
