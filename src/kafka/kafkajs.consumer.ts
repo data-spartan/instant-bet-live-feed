@@ -17,18 +17,25 @@ export class KafkajsConsumer implements IConsumer {
   private readonly logger: Logger;
 
   constructor(
-    private readonly topic: ConsumerSubscribeTopic,
+    // private readonly topic: ConsumerSubscribeTopic,
     // private readonly databaseService: DatabaseService,
     config: ConsumerConfig,
     broker: string,
   ) {
     this.kafka = new Kafka({ brokers: [broker] });
     this.consumer = this.kafka.consumer(config);
-    this.logger = new Logger(`${topic.topic}-${config.groupId}`);
+    // this.logger = new Logger(`${topic.topic}-${config.groupId}`);
   }
 
-  async consume(onMessage: (message: KafkaMessage) => Promise<void>) {
-    await this.consumer.subscribe(this.topic);
+  async subscribe_(config: any) {
+    await this.consumer.subscribe(config);
+  }
+
+  async run_(eachMessage: any) {
+    this.consumer.run(eachMessage);
+  }
+  async consume(onMessage: (message: KafkaMessage) => Promise<Object>) {
+    // await this.consumer.subscribe(this.topic);
     console.log('STEFAN');
     await this.consumer.run({
       eachMessage: async ({ message, partition }) => {

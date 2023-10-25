@@ -14,9 +14,11 @@ import {
   LiveFeedResolvedSchema,
 } from 'src/database/schemas/liveFeedResolved.schema';
 import { KafkaOptions } from 'src/interfaces/kafkaOptions.interfaces';
-import { TestConsumer } from 'src/kafka/createConsumer';
+// import { CreateConsumer } from 'src/kafka/createConsumer';
 import { Kafka } from 'kafkajs';
 import { KafkaModule } from 'src/kafka/kafka.module';
+import { APP_FILTER } from '@nestjs/core';
+import { KafkaExceptionFilter } from 'src/exception-filters/kafkaException.filter';
 
 @Module({
   imports: [
@@ -24,15 +26,15 @@ import { KafkaModule } from 'src/kafka/kafka.module';
       { name: LiveFeed.name, schema: LiveFeedSchema },
       { name: LiveFeedResolved.name, schema: LiveFeedResolvedSchema },
     ]),
-    KafkaModule,
     // ClientsModule.register([
     //   {
-    //     name: 'LIVE_FEED_MICROSERVICE',
+    //     name: 'LIVE_FEED',
     //     transport: Transport.KAFKA,
     //     options: {
     //       client: {
     //         brokers: ['localhost:9092', 'localhost:9093'],
     //       },
+
     //       // producerOnlyMode: true,
     //       consumer: {
     //         groupId: 'live-feed-consumer',
@@ -40,10 +42,10 @@ import { KafkaModule } from 'src/kafka/kafka.module';
     //       },
     //     },
     //   },
-    //   // client: ClientKafka
     // ]),
   ],
-  providers: [LiveFeedService, TestConsumer],
+  providers: [LiveFeedService],
   controllers: [LiveFeedController],
+  // exports: [LiveFeedService],
 })
 export class LiveFeedModule {}

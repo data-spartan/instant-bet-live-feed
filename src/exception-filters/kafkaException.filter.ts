@@ -12,7 +12,7 @@ export class KafkaExceptionFilter implements RpcExceptionFilter<RpcException> {
   // private readonly logger = new Logger(KafkaExceptionFilter.name);
   catch(exception: RpcException, host: ArgumentsHost): Observable<any> {
     // this.logger.warn(exception);
-    console.log('STEFAN');
+    console.log('TEST');
     throw exception.getError();
   }
 }
