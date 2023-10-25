@@ -15,15 +15,18 @@ async function bootstrap() {
       },
       consumer: {
         groupId: 'live-feed-consumer',
+        heartbeatInterval: 2000,
+        sessionTimeout: 10000,
+        retry: { retries: 1 },
+        readUncommitted: false,
+      },
+      subscribe: {
+        topics: ['live_feed', 'live_feed_resolved'],
+        fromBeginning: false,
       },
       run: {
         autoCommit: false,
       },
-
-      // subscribe: {
-      //   topics: ['live_feed', 'live_feed_resolved', 'resolve_tickets'],
-      //   fromBeginning: false,
-      // },
     },
   });
   app.connectMicroservice<KafkaOptions>({
@@ -36,6 +39,14 @@ async function bootstrap() {
       },
       consumer: {
         groupId: 'live-feed-consumer',
+        heartbeatInterval: 2000,
+        sessionTimeout: 10000,
+        retry: { retries: 1 },
+        readUncommitted: false,
+      },
+      subscribe: {
+        topics: ['live_feed', 'live_feed_resolved'],
+        fromBeginning: false,
       },
       run: {
         autoCommit: false,
@@ -47,8 +58,9 @@ async function bootstrap() {
     },
   });
   await app.startAllMicroservices();
-  const a = app.getMicroservices();
-  console.log(await a[1]['server']['consumer']);
+  const micro = app.getMicroservices();
+
+  // console.log(await micro[1]['server']);
   await app.listen(3000);
 }
 

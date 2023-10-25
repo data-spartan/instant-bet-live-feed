@@ -1,7 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ClientKafka, KafkaRetriableException } from '@nestjs/microservices';
+import {
+  ClientKafka,
+  KafkaRetriableException,
+  RpcException,
+} from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, MongooseError } from 'mongoose';
+import { type } from 'os';
 import { Exception } from 'sass';
 import {
   LiveFeed,
@@ -21,10 +26,14 @@ export class LiveFeedService {
     private readonly resolvedRepo: Model<LiveFeedResolvedDocument>,
   ) {}
   public async insertFeed(feed: any) {
+    const session = this.feedRepo.startSession();
     const updateArr = feed.map((obj) => ({
       updateOne: {
         filter: {
           _id: obj.fixtureId,
+          updatedAt: { $lte: obj.sentTime },
+          //update only latest sent fixtures
+          // (can happen that producer send 2 exact fixtures to diff partitions), keep only latest
         },
 
         update: {
@@ -56,10 +65,19 @@ export class LiveFeedService {
         // setDefaultsOnInsert: true,
       },
     }));
-    this.feedRepo.bulkWrite(updateArr);
+
+    try {
+      (await session).startTransaction();
+      await this.feedRepo.bulkWrite(updateArr);
+      (await session).commitTransaction();
+    } catch (e) {
+    } finally {
+      (await session).endSession();
+    }
   }
 
   public async insertResolved(resolved: any) {
+    const session = this.feedRepo.startSession();
     const toResolveTickets = [];
     const updateArr = resolved.map((obj) => ({
       updateOne: {
@@ -68,7 +86,7 @@ export class LiveFeedService {
         },
         update: {
           $setOnInsert: {
-            fixtureId: obj.fixtureId,
+            _id: obj.fixtureId,
           },
           $set: {
             status:
@@ -85,11 +103,17 @@ export class LiveFeedService {
         upsert: true,
       },
     }));
+    //must use tranaction with bulkwrite bcs of dupl key error
     try {
+      (await session).startTransaction();
       await this.resolvedRepo.bulkWrite(updateArr);
+      (await session).commitTransaction();
       return toResolveTickets;
     } catch (e) {
-      throw new MongooseError(e.message);
+      throw new RpcException(`STEFAN CAR ${e}`);
+    } finally {
+      (await session).endSession();
+      console.log('SESSION ENDED');
     }
   }
 

@@ -3,10 +3,12 @@ import { HydratedDocument } from 'mongoose';
 
 export type LiveFeedDocument = HydratedDocument<LiveFeed>;
 
-@Schema({ timestamps: { createdAt: true, updatedAt: false } })
+@Schema({ timestamps: { createdAt: true, updatedAt: true } })
 export class LiveFeed {
-  @Prop({ required: true })
+  @Prop({ required: true, unique: false })
   _id: number;
+  // @Prop({ required: true, unique: true })
+  // fixtureId: number;
 
   @Prop({ required: true })
   source: string;
@@ -61,8 +63,7 @@ export class LiveFeed {
 }
 
 const LiveFeedSchema = SchemaFactory.createForClass(LiveFeed);
-
 LiveFeedSchema.index({ 'games.sourceGameId': 1 });
-// LiveFeedSchema.index({ createdAt: 1 }, { expireAfterSeconds: 120 });
+LiveFeedSchema.index({ createdAt: 1 }, { expireAfterSeconds: 120 });
 
 export { LiveFeedSchema };

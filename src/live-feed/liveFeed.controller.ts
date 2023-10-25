@@ -1,4 +1,10 @@
-import { Controller, Get, Inject, OnModuleInit } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Inject,
+  OnModuleInit,
+  UseFilters,
+} from '@nestjs/common';
 import { LiveFeedService } from './liveFeed.service';
 import {
   ClientKafka,
@@ -12,7 +18,10 @@ import {
 } from '@nestjs/microservices';
 import { SubscribeTo } from 'src/kafka/kafka.decorator';
 import { Consumer } from 'kafkajs';
+import { KafkaCtx } from 'src/decorators/kafkaContext.decorator';
+import { KafkaExceptionFilter } from 'src/exception-filters/kafkaException.filter';
 
+@UseFilters(new KafkaExceptionFilter())
 @Controller('feed')
 export class LiveFeedController {
   constructor(
@@ -21,36 +30,49 @@ export class LiveFeedController {
   ) {}
 
   @EventPattern('live_feed')
-  async liveData(@Payload() data, @Ctx() context: KafkaContext) {
-    // console.log(context.getConsumer());
-    const { offset } = context.getMessage();
-    const partition = context.getPartition();
-    const topic = context.getTopic();
+  async liveData(
+    @Payload() data,
+    @KafkaCtx() { kafkaCtx, offset, partition, topic }: any,
+  ) {
     this.liveFeedService.insertFeed(data);
-    await context.getConsumer().commitOffsets([{ topic, partition, offset }]);
+    await kafkaCtx.getConsumer().commitOffsets([
+      { topic, partition, offset: (Number(offset) + 1).toString() },
+      //add +1 bcs evertime consumer restarts it reads last message,
+      //  Bcs kafkajs doesnt commit last arrived message
+    ]);
 
     // context.getProducer().send({ topic: 'resolve_tickets', messages: [data] });
     // console.log(await context.getConsumer().describeGroup());
   }
 
   @EventPattern('live_resolved')
-  async liveResolved(@Payload() data, @Ctx() context: KafkaContext) {
-    const { offset } = context.getMessage();
-    const partition = context.getPartition();
-    const topic = context.getTopic();
-
+  async liveResolved(
+    @Payload() data,
+    @KafkaCtx() { kafkaCtx, offset, partition, topic }: any,
+  ) {
+    // console.log(offset, topic, partition);
     const toResolveTickets = await this.liveFeedService.insertResolved(data);
     if (toResolveTickets)
       this.clientKafka.emit('resolve_tickets', toResolveTickets);
-    await context.getConsumer().commitOffsets([{ topic, partition, offset }]);
-    console.log('STEFAN');
-    await context.getConsumer().disconnect();
+    await kafkaCtx
+      .getConsumer()
+      .commitOffsets([
+        { topic, partition, offset: (Number(offset) + 1).toString() },
+      ]);
+
+    // console.log('STEFAN');
   }
 
   @EventPattern('resolve_tickets')
-  async liveGames(@Payload() data) {
-    // this.liveFeedService.resolveTickets(data);
-    console.log(data[0]['fixtureId']);
+  async liveGames(
+    @Payload() data,
+    @KafkaCtx() { kafkaCtx, offset, partition, topic }: any,
+  ) {
+    await kafkaCtx
+      .getConsumer()
+      .commitOffsets([
+        { topic, partition, offset: (Number(offset) + 1).toString() },
+      ]);
     // this.liveFeedService.insertFeed(data);
   }
 }

@@ -32,10 +32,10 @@ import { GlobalModule } from './global.module';
   controllers: [AppController],
   providers: [
     AppService,
-    {
-      provide: APP_FILTER,
-      useClass: KafkaExceptionFilter,
-    },
+    // {
+    //   provide: APP_FILTER,
+    //   useClass: KafkaExceptionFilter,
+    // },
   ],
 })
 export class AppModule {}

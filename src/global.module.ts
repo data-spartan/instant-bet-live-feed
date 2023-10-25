@@ -14,9 +14,13 @@ import {
         transport: Transport.KAFKA,
         options: {
           client: {
+            clientId: 'live-feed',
             brokers: ['localhost:9092', 'localhost:9093'],
           },
           producerOnlyMode: true,
+          consumer: {
+            groupId: 'live-feed-consumer',
+          },
         },
       }),
     },
