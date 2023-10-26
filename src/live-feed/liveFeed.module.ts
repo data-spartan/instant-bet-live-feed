@@ -44,7 +44,13 @@ import { KafkaExceptionFilter } from 'src/exception-filters/kafkaException.filte
     //   },
     // ]),
   ],
-  providers: [LiveFeedService],
+  providers: [
+    LiveFeedService,
+    // {
+    //   provide: APP_FILTER,
+    //   useClass: KafkaExceptionFilter,
+    // },
+  ],
   controllers: [LiveFeedController],
   // exports: [LiveFeedService],
 })

@@ -21,7 +21,6 @@ import { Consumer } from 'kafkajs';
 import { KafkaCtx } from 'src/decorators/kafkaContext.decorator';
 import { KafkaExceptionFilter } from 'src/exception-filters/kafkaException.filter';
 
-@UseFilters(new KafkaExceptionFilter())
 @Controller('feed')
 export class LiveFeedController {
   constructor(
@@ -29,18 +28,21 @@ export class LiveFeedController {
     @Inject('LIVE_FEED') private readonly clientKafka: ClientKafka,
   ) {}
 
+  // @UseFilters(new KafkaExceptionFilter())
   @EventPattern('live_feed')
   async liveData(
     @Payload() data,
     @KafkaCtx() { kafkaCtx, offset, partition, topic }: any,
   ) {
     this.liveFeedService.insertFeed(data);
+    console.log('POSLE INSERT FEED');
     await kafkaCtx.getConsumer().commitOffsets([
       { topic, partition, offset: (Number(offset) + 1).toString() },
       //add +1 bcs evertime consumer restarts it reads last message,
       //  Bcs kafkajs doesnt commit last arrived message
     ]);
 
+    console.log('POSLE COMMIT');
     // context.getProducer().send({ topic: 'resolve_tickets', messages: [data] });
     // console.log(await context.getConsumer().describeGroup());
   }

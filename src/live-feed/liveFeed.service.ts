@@ -16,6 +16,7 @@ import {
   LiveFeedResolved,
   LiveFeedResolvedDocument,
 } from 'src/database/schemas/liveFeedResolved.schema';
+import { KafkaExceptionFilter } from 'src/exception-filters/kafkaException.filter';
 
 @Injectable()
 export class LiveFeedService {
@@ -71,6 +72,7 @@ export class LiveFeedService {
       await this.feedRepo.bulkWrite(updateArr);
       (await session).commitTransaction();
     } catch (e) {
+      throw new Error(`STEFAN ${e}`);
     } finally {
       (await session).endSession();
     }
@@ -113,7 +115,6 @@ export class LiveFeedService {
       throw new RpcException(`STEFAN CAR ${e}`);
     } finally {
       (await session).endSession();
-      console.log('SESSION ENDED');
     }
   }
 
