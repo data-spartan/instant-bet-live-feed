@@ -5,10 +5,12 @@ import { AppService } from './app.service';
 // import { LiveFeedController } from './live-feed/liveFeed.controller';
 import { AppController } from './app.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { KafkaExceptionFilter } from './exception-filters/kafkaException.filter';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { GlobalModule } from './global.module';
+import { AllExceptionsFilter } from './exception-filters/allExceptions.filter';
+import { CatchExceptionInterceptor } from './interceptors/kafkaConsumer.interceptor';
 
 @Module({
   imports: [
@@ -32,10 +34,18 @@ import { GlobalModule } from './global.module';
   controllers: [AppController],
   providers: [
     AppService,
-    // {
-    //   provide: APP_FILTER,
-    //   useClass: KafkaExceptionFilter,
-    // },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: KafkaExceptionFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: CatchExceptionInterceptor,
+    },
   ],
 })
 export class AppModule {}

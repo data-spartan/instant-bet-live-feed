@@ -11,8 +11,27 @@ import { Observable, throwError } from 'rxjs';
 export class KafkaExceptionFilter implements RpcExceptionFilter<RpcException> {
   // private readonly logger = new Logger(KafkaExceptionFilter.name);
   catch(exception: RpcException, host: ArgumentsHost): Observable<any> {
-    // this.logger.warn(exception);
+    const adapter = host.switchToRpc().getContext();
+    // console.log(adapter);
     console.log('TEST');
     throw exception.getError();
   }
 }
+// import {
+//   ExceptionFilter,
+//   Catch,
+//   ArgumentsHost,
+//   HttpException,
+// } from '@nestjs/common';
+// import { KafkaContext, RpcException } from '@nestjs/microservices';
+// import { throwError } from 'rxjs';
+
+// @Catch(HttpException)
+// export class KafkaExceptionFilter implements ExceptionFilter {
+//   async catch(exception: HttpException, host: ArgumentsHost) {
+//     const hostType = host.getType(); // 'rpc'
+//     const context = host.switchToRpc().getContext<KafkaContext>();
+//     console.log('CARINA');
+//     return throwError(() => new RpcException(exception));
+//   }
+// }

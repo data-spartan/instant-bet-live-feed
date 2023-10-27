@@ -2,12 +2,12 @@ import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
 import { KafkaOptions } from './interfaces/kafkaOptions.interfaces';
+import { KafkaExceptionFilter } from './exception-filters/kafkaException.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.connectMicroservice<KafkaOptions>(
     {
-      // name: 'LIVE_FEED',
       transport: Transport.KAFKA,
       options: {
         client: {
@@ -17,8 +17,8 @@ async function bootstrap() {
         consumer: {
           groupId: 'live-feed-consumer',
           heartbeatInterval: 2000,
-          sessionTimeout: 10000,
-          retry: { retries: 1 },
+          sessionTimeout: 12000,
+          retry: { retries: 2, factor: 0, multiplier: 1 },
           readUncommitted: false,
         },
         subscribe: {
@@ -35,7 +35,6 @@ async function bootstrap() {
   );
   app.connectMicroservice<KafkaOptions>(
     {
-      // name: 'LIVE_FEED',
       transport: Transport.KAFKA,
       options: {
         client: {
@@ -45,8 +44,8 @@ async function bootstrap() {
         consumer: {
           groupId: 'live-feed-consumer',
           heartbeatInterval: 2000,
-          sessionTimeout: 10000,
-          retry: { retries: 1 },
+          sessionTimeout: 12000,
+          retry: { retries: 2, factor: 0, multiplier: 1 },
           readUncommitted: false,
         },
         subscribe: {
@@ -62,7 +61,6 @@ async function bootstrap() {
   );
   await app.startAllMicroservices();
   const micro = app.getMicroservices();
-
   // console.log(await micro[1]['server']);
   await app.listen(3000);
 }

@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import {
   ClientKafka,
   KafkaRetriableException,
@@ -26,15 +26,16 @@ export class LiveFeedService {
     @InjectModel(LiveFeedResolved.name)
     private readonly resolvedRepo: Model<LiveFeedResolvedDocument>,
   ) {}
-  public async insertFeed(feed: any) {
-    const session = this.feedRepo.startSession();
+  public async insertFeed(feed: any, errorCount: number) {
+    const session = await this.feedRepo.startSession();
     const updateArr = feed.map((obj) => ({
       updateOne: {
         filter: {
-          _id: obj.fixtureId,
+          _d: obj.fixtureId,
           updatedAt: { $lte: obj.sentTime },
           //update only latest sent fixtures
           // (can happen that producer send 2 exact fixtures to diff partitions), keep only latest
+          //or consumer crashed and and didnt commit offset so it pulls multiple messages(could me multiple fixtures with same id, but sent in diff time )
         },
 
         update: {
@@ -68,18 +69,23 @@ export class LiveFeedService {
     }));
 
     try {
-      (await session).startTransaction();
+      session.startTransaction();
       await this.feedRepo.bulkWrite(updateArr);
-      (await session).commitTransaction();
+      await session.commitTransaction();
+      // await session.endSession();
+      return true;
     } catch (e) {
-      throw new Error(`STEFAN ${e}`);
+      await session.abortTransaction();
+      errorCount['count'] += 1;
+      throw new RpcException(`STEFAN CAR ${e}`);
     } finally {
-      (await session).endSession();
+      await session.endSession();
     }
   }
 
   public async insertResolved(resolved: any) {
-    const session = this.feedRepo.startSession();
+    const session = await this.feedRepo.startSession();
+    // console.log(session);
     const toResolveTickets = [];
     const updateArr = resolved.map((obj) => ({
       updateOne: {
@@ -107,14 +113,15 @@ export class LiveFeedService {
     }));
     //must use tranaction with bulkwrite bcs of dupl key error
     try {
-      (await session).startTransaction();
+      session.startTransaction();
       await this.resolvedRepo.bulkWrite(updateArr);
-      (await session).commitTransaction();
+      await session.commitTransaction();
       return toResolveTickets;
     } catch (e) {
+      await session.abortTransaction();
       throw new RpcException(`STEFAN CAR ${e}`);
     } finally {
-      (await session).endSession();
+      await session.endSession();
     }
   }
 

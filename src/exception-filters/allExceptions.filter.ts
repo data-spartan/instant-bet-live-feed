@@ -5,7 +5,7 @@ import {
   KafkaJSNumberOfRetriesExceeded,
 } from '@nestjs/microservices/external/kafka.interface';
 
-@Catch(KafkaRetriableException)
+@Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: Error, host: ArgumentsHost) {
     console.log(exception.message, 'DJOKA');
