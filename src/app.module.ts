@@ -15,7 +15,10 @@ import { CatchExceptionInterceptor } from './interceptors/kafkaConsumer.intercep
 @Module({
   imports: [
     LiveFeedModule,
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: `.env.${process.env.NODE_ENV}`,
+    }),
     MongooseModule.forRoot('mongodb://localhost/live-feed'),
     GlobalModule,
     // ClientsModule.register([

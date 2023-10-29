@@ -1,64 +1,35 @@
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
-import { KafkaOptions } from './interfaces/kafkaOptions.interfaces';
+import { ConfigService } from '@nestjs/config';
+import {
+  InheritAppConfig,
+  KafkaOptions,
+} from './interfaces/kafkaOptions.interfaces';
 import { KafkaExceptionFilter } from './exception-filters/kafkaException.filter';
+import { configKafka } from './kafka/kafkaServer.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.connectMicroservice<KafkaOptions>(
-    {
-      transport: Transport.KAFKA,
-      options: {
-        client: {
-          clientId: 'live-feed',
-          brokers: ['localhost:9092', 'localhost:9093'],
-        },
-        consumer: {
-          groupId: 'live-feed-consumer',
-          heartbeatInterval: 2000,
-          sessionTimeout: 12000,
-          retry: { retries: 2, factor: 0, multiplier: 1 },
-          readUncommitted: false,
-        },
-        subscribe: {
-          topics: ['live_feed', 'live_feed_resolved'],
-          fromBeginning: false,
-        },
-        run: {
-          autoCommit: false,
-        },
-      },
-    },
-    { inheritAppConfig: true }, //in hybrid apps need to add this bcs of enabling global exceptions handlers, pipes...
-    //otherwise you must UseFilter on every controller
+  const configService = app.get(ConfigService); //to use configService in main.ts need to first import ConfigModule in AppModule
+
+  const KAFKA_BROKERS = configService.get('KAFKA_BROKERS');
+  const KAFKA_TOPICS = configService.get('KAFKA_TOPICS');
+  const CONSUMERS_NUM = Number(configService.get('CONSUMERS_NUM'));
+  const KAFKA_DEFAULT_RETRIES = Number(
+    configService.get('KAFKA_DEFAULT_RETRIES'),
   );
-  app.connectMicroservice<KafkaOptions>(
-    {
-      transport: Transport.KAFKA,
-      options: {
-        client: {
-          clientId: 'live-feed',
-          brokers: ['localhost:9092', 'localhost:9093'],
-        },
-        consumer: {
-          groupId: 'live-feed-consumer',
-          heartbeatInterval: 2000,
-          sessionTimeout: 12000,
-          retry: { retries: 2, factor: 0, multiplier: 1 },
-          readUncommitted: false,
-        },
-        subscribe: {
-          topics: ['live_feed', 'live_feed_resolved'],
-          fromBeginning: false,
-        },
-        run: {
-          autoCommit: false,
-        },
+
+  for (let i = 0; i < CONSUMERS_NUM; i++) {
+    app.connectMicroservice<any>(
+      configKafka(KAFKA_BROKERS, KAFKA_TOPICS, KAFKA_DEFAULT_RETRIES),
+      {
+        inheritAppConfig: true, //in hybrid apps need to add this bcs of enabling global exceptions handlers, pipes...
+        //otherwise you must UseFilter on every controller
       },
-    },
-    { inheritAppConfig: true },
-  );
+    );
+  }
+
   await app.startAllMicroservices();
   const micro = app.getMicroservices();
   // console.log(await micro[1]['server']);

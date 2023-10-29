@@ -26,12 +26,12 @@ export class LiveFeedService {
     @InjectModel(LiveFeedResolved.name)
     private readonly resolvedRepo: Model<LiveFeedResolvedDocument>,
   ) {}
-  public async insertFeed(feed: any, errorCount: number) {
+  public async insertFeed(feed: any, consErrCount: number) {
     const session = await this.feedRepo.startSession();
     const updateArr = feed.map((obj) => ({
       updateOne: {
         filter: {
-          _d: obj.fixtureId,
+          _id: obj.fixtureId,
           updatedAt: { $lte: obj.sentTime },
           //update only latest sent fixtures
           // (can happen that producer send 2 exact fixtures to diff partitions), keep only latest
@@ -76,16 +76,15 @@ export class LiveFeedService {
       return true;
     } catch (e) {
       await session.abortTransaction();
-      errorCount['count'] += 1;
+      consErrCount['count'] += 1;
       throw new RpcException(`STEFAN CAR ${e}`);
     } finally {
       await session.endSession();
     }
   }
 
-  public async insertResolved(resolved: any) {
-    const session = await this.feedRepo.startSession();
-    // console.log(session);
+  public async insertResolved(resolved: any, consErrCount) {
+    const session = await this.resolvedRepo.startSession();
     const toResolveTickets = [];
     const updateArr = resolved.map((obj) => ({
       updateOne: {
@@ -119,6 +118,44 @@ export class LiveFeedService {
       return toResolveTickets;
     } catch (e) {
       await session.abortTransaction();
+      consErrCount['count'] += 1;
+      throw new RpcException(`STEFAN CAR ${e}`);
+    } finally {
+      await session.endSession();
+    }
+  }
+
+  public async insertDlqResolved(resolved: any, consErrCount) {
+    const session = await this.feedRepo.startSession();
+    const updateArr = resolved.map((obj) => ({
+      updateOne: {
+        filter: {
+          _id: obj.fixtureId,
+        },
+        update: {
+          $setOnInsert: {
+            _id: obj.fixtureId,
+          },
+          $set: {
+            status: obj.status,
+          },
+          $push: {
+            resolved: {
+              $each: obj.resolved,
+            },
+          },
+        },
+        upsert: true,
+      },
+    }));
+    //must use tranaction with bulkwrite bcs of dupl key error
+    try {
+      session.startTransaction();
+      await this.resolvedRepo.bulkWrite(updateArr);
+      await session.commitTransaction();
+    } catch (e) {
+      await session.abortTransaction();
+      consErrCount['count'] += 1;
       throw new RpcException(`STEFAN CAR ${e}`);
     } finally {
       await session.endSession();
