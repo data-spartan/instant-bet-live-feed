@@ -33,3 +33,9 @@ export interface KafkaOptions {
     deserializer?: Deserializer;
   };
 }
+
+export type InheritAppConfig = {
+  inheritConfig: {
+    inheritAppConfig: true;
+  };
+};

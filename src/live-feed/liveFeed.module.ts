@@ -16,7 +16,6 @@ import {
 import { KafkaOptions } from 'src/interfaces/kafkaOptions.interfaces';
 // import { CreateConsumer } from 'src/kafka/createConsumer';
 import { Kafka } from 'kafkajs';
-import { KafkaModule } from 'src/kafka/kafka.module';
 import { APP_FILTER } from '@nestjs/core';
 import { KafkaExceptionFilter } from 'src/exception-filters/kafkaException.filter';
 
@@ -44,7 +43,13 @@ import { KafkaExceptionFilter } from 'src/exception-filters/kafkaException.filte
     //   },
     // ]),
   ],
-  providers: [LiveFeedService],
+  providers: [
+    LiveFeedService,
+    // {
+    //   provide: APP_FILTER,
+    //   useClass: KafkaExceptionFilter,
+    // },
+  ],
   controllers: [LiveFeedController],
   // exports: [LiveFeedService],
 })

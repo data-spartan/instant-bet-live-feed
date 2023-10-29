@@ -4,6 +4,7 @@ import {
   Inject,
   OnModuleInit,
   UseFilters,
+  UseInterceptors,
 } from '@nestjs/common';
 import { LiveFeedService } from './liveFeed.service';
 import {
@@ -16,63 +17,104 @@ import {
   ServerKafka,
   ClientProxy,
 } from '@nestjs/microservices';
-import { SubscribeTo } from 'src/kafka/kafka.decorator';
 import { Consumer } from 'kafkajs';
 import { KafkaCtx } from 'src/decorators/kafkaContext.decorator';
 import { KafkaExceptionFilter } from 'src/exception-filters/kafkaException.filter';
+import { CustomKafkaContext } from 'src/interfaces/kafkaContext.interface';
+import { CatchExceptionInterceptor } from 'src/interceptors/kafkaConsumer.interceptor';
+import { Console } from 'console';
+import { ConfigService } from '@nestjs/config';
 
-@UseFilters(new KafkaExceptionFilter())
 @Controller('feed')
 export class LiveFeedController {
+  private consumerErrCount;
+  private producerErrCount;
+  private liveFeedErrThrehsold;
+  private liveResolvedErrThrehsold;
+  private dlqErrThrehsold;
+  private defaultRetries;
   constructor(
     private readonly liveFeedService: LiveFeedService,
+    private readonly configService: ConfigService,
     @Inject('LIVE_FEED') private readonly clientKafka: ClientKafka,
-  ) {}
+  ) {
+    this.consumerErrCount = { count: 0 };
+    this.producerErrCount = { count: 0 };
+    this.defaultRetries = Number(
+      this.configService.get('KAFKA_DEFAULT_RETRIES'),
+    );
+  }
 
+  // @UseInterceptors(CatchExceptionInterceptor)
   @EventPattern('live_feed')
   async liveData(
-    @Payload() data,
-    @KafkaCtx() { kafkaCtx, offset, partition, topic }: any,
+    @Payload() data: any,
+    @KafkaCtx()
+    { offset, partition, topic, consumer }: CustomKafkaContext,
   ) {
-    this.liveFeedService.insertFeed(data);
-    await kafkaCtx.getConsumer().commitOffsets([
-      { topic, partition, offset: (Number(offset) + 1).toString() },
-      //add +1 bcs evertime consumer restarts it reads last message,
-      //  Bcs kafkajs doesnt commit last arrived message
-    ]);
-
+    if (this.consumerErrCount['count'] === this.defaultRetries) {
+      console.log('IN ERROR');
+      await consumer.commitOffsets([{ topic, partition, offset }]);
+      this.consumerErrCount['count'] = 0;
+    }
+    const inserted = await this.liveFeedService.insertFeed(
+      data,
+      this.consumerErrCount,
+    );
+    if (inserted) {
+      await consumer.commitOffsets([{ topic, partition, offset }]);
+      this.consumerErrCount['count'] = 0;
+    }
+    return 'TEST';
     // context.getProducer().send({ topic: 'resolve_tickets', messages: [data] });
-    // console.log(await context.getConsumer().describeGroup());
   }
 
   @EventPattern('live_resolved')
   async liveResolved(
     @Payload() data,
-    @KafkaCtx() { kafkaCtx, offset, partition, topic }: any,
+    @KafkaCtx()
+    { offset, partition, topic, consumer }: CustomKafkaContext,
   ) {
-    // console.log(offset, topic, partition);
-    const toResolveTickets = await this.liveFeedService.insertResolved(data);
-    if (toResolveTickets)
-      this.clientKafka.emit('resolve_tickets', toResolveTickets);
-    await kafkaCtx
-      .getConsumer()
-      .commitOffsets([
-        { topic, partition, offset: (Number(offset) + 1).toString() },
-      ]);
+    //extremely imporatant that after n retries you send resolved data to dlq bcs ticket payment depends on it
+    if (this.consumerErrCount['count'] === 5) {
+      //SEND TO DLQ
+      this.clientKafka.emit('dlq_resolved', data);
+      await consumer.commitOffsets([{ topic, partition, offset }]);
+      this.consumerErrCount['count'] = 0;
+    }
 
-    // console.log('STEFAN');
+    const toResolveTickets = await this.liveFeedService.insertResolved(
+      data,
+      this.consumerErrCount,
+    );
+    if (toResolveTickets) {
+      this.clientKafka.emit('resolve_tickets', toResolveTickets);
+    }
+    await consumer.commitOffsets([{ topic, partition, offset }]);
+    console.log('POSLE COMMITA');
   }
 
-  @EventPattern('resolve_tickets')
-  async liveGames(
+  // @EventPattern('resolve_tickets')
+  // async liveGames(
+  //   @Payload() data,
+  //   @KafkaCtx()
+  //   { kafkaCtx, offset, partition, topic, consumer }: CustomKafkaContext,
+  // ) {
+  //   await consumer.commitOffsets([{ topic, partition, offset }]);
+  //   // this.liveFeedService.insertFeed(data);
+  // }
+
+  @EventPattern('dlq_resolved')
+  async dlqResolved(
     @Payload() data,
-    @KafkaCtx() { kafkaCtx, offset, partition, topic }: any,
+    { kafkaCtx, offset, partition, topic, consumer }: CustomKafkaContext,
   ) {
-    await kafkaCtx
-      .getConsumer()
-      .commitOffsets([
-        { topic, partition, offset: (Number(offset) + 1).toString() },
-      ]);
-    // this.liveFeedService.insertFeed(data);
+    if (this.consumerErrCount['count'] === 10) {
+      //SEND NOTIFICATION TO SLACK
+      // await consumer.commitOffsets([{ topic, partition, offset }]);
+      this.consumerErrCount['count'] = 0;
+    }
+    await this.liveFeedService.insertDlqResolved(data, this.consumerErrCount);
+    await consumer.commitOffsets([{ topic, partition, offset }]);
   }
 }
