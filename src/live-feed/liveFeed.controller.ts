@@ -28,11 +28,11 @@ import { joinObjProps } from 'src/utils/joinObjectProps.utils';
 
 @Controller('feed')
 export class LiveFeedController {
-  private consumerErrCount;
-  private producerErrCount;
-  private liveFeedErrThrehsold;
-  private liveResolvedErrThrehsold;
-  private dlqErrThrehsold;
+  // private consumerErrCount;
+  // private producerErrCount;
+  // private liveFeedErrThrehsold;
+  // private liveResolvedErrThrehsold;
+  // private dlqErrThrehsold;
   // private defaultRetries;
   constructor(
     private readonly liveFeedService: LiveFeedService,
@@ -70,30 +70,31 @@ export class LiveFeedController {
     // context.getProducer().send({ topic: 'resolve_tickets', messages: [data] });
   }
 
-  //   @EventPattern('live_resolved')
-  //   async liveResolved(
-  //     @Payload() data,
-  //     @KafkaCtx()
-  //     { offset, partition, topic, consumer }: CustomKafkaContext,
-  //   ) {
-  //     //extremely imporatant that after n retries you send resolved data to dlq bcs ticket payment depends on it
-  //     if (this.consumerErrCount['count'] === 5) {
-  //       //SEND TO DLQ
-  //       this.clientKafka.emit('dlq_resolved', data);
-  //       await consumer.commitOffsets([{ topic, partition, offset }]);
-  //       this.consumerErrCount['count'] = 0;
-  //     }
+  // @EventPattern('live_resolved')
+  // async liveResolved(
+  //   @Payload() data,
+  //   @KafkaCtx()
+  //   { offset, partition, topic, consumer, producer }: CustomKafkaContext,
+  // ) {
+  //   //extremely imporatant that after n retries you send resolved data to dlq bcs ticket payment depends on it
+  //   // if (this.consumerErrCount['count'] === 5) {
+  //   //   //SEND TO DLQ
+  //   //   this.clientKafka.emit('dlq_resolved', data);
+  //   //   await consumer.commitOffsets([{ topic, partition, offset }]);
+  //   //   this.consumerErrCount['count'] = 0;
+  //   // }
 
-  //     const toResolveTickets = await this.liveFeedService.insertResolved(
-  //       data,
-  //       this.consumerErrCount,
-  //     );
-  //     if (toResolveTickets) {
-  //       this.clientKafka.emit('resolve_tickets', toResolveTickets);
-  //     }
-  //     await consumer.commitOffsets([{ topic, partition, offset }]);
-  //     console.log('POSLE COMMITA');
-  //   }
+  //   await this.liveFeedService.insertResolved(data, consumer, producer, {
+  //     topic,
+  //     partition,
+  //     offset,
+  //   });
+  //   // if (toResolveTickets) {
+  //   //   this.clientKafka.emit('resolve_tickets', toResolveTickets);
+  //   // }
+  //   // await consumer.commitOffsets([{ topic, partition, offset }]);
+  //   // console.log('POSLE COMMITA');
+  // }
 
   //   // @EventPattern('resolve_tickets')
   //   // async liveGames(

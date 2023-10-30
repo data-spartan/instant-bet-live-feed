@@ -6,7 +6,7 @@ import {
   RpcException,
 } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
-import { Consumer, TopicPartitionOffsetAndMetadata } from 'kafkajs';
+import { Consumer, Producer, TopicPartitionOffsetAndMetadata } from 'kafkajs';
 import { Model, MongooseError } from 'mongoose';
 import { type } from 'os';
 import { Exception } from 'sass';
@@ -98,16 +98,21 @@ export class LiveFeedService {
       console.log('IN ERROR');
       throw insertFeed['error'];
     }
-    // this.consumerErrCount[errIndex] = '';
+
     this.consumerErrCount.splice(errIndex, 1);
     await consumer.commitOffsets([partTopOff]);
     return;
   }
 
-  public async insertResolved(resolved: any, consErrCount) {
-    const session = await this.resolvedRepo.startSession();
+  public async insertResolved(
+    resolvedData: any,
+    consumer: Consumer,
+    producer: Producer,
+    partTopOff: TopicPartitionOffsetAndMetadata,
+  ) {
+    // const session = await this.resolvedRepo.startSession();
     const toResolveTickets = [];
-    const updateArr = resolved.map((obj) => ({
+    const updateArr = resolvedData.map((obj) => ({
       updateOne: {
         filter: {
           _id: obj.fixtureId,
@@ -131,19 +136,37 @@ export class LiveFeedService {
         upsert: true,
       },
     }));
-    //must use tranaction with bulkwrite bcs of dupl key error
-    try {
-      session.startTransaction();
-      await this.resolvedRepo.bulkWrite(updateArr);
-      await session.commitTransaction();
-      return toResolveTickets;
-    } catch (e) {
-      await session.abortTransaction();
-      consErrCount['count'] += 1;
-      throw new RpcException(`STEFAN CAR ${e}`);
-    } finally {
-      await session.endSession();
+    const resolved = await liveFeedTransaction(
+      this.resolvedRepo,
+      updateArr,
+      this.consumerErrCount,
+      partTopOff,
+    );
+    if (!resolved['error']) {
+      if (toResolveTickets) {
+        await producer.send({
+          topic: 'resolve_tickets',
+          messages: toResolveTickets,
+        });
+      }
+      await consumer.commitOffsets([partTopOff]);
+      return;
     }
+    const errIndex = resolved['errIndex'];
+    if (this.consumerErrCount[errIndex]['count'] !== this.defaultRetries) {
+      console.log('IN ERROR');
+      throw resolved['error'];
+    } else {
+      await producer.send({
+        topic: 'dlq_resolved',
+        messages: resolvedData,
+      });
+    }
+    // this.consumerErrCount[errIndex] = '';
+    this.consumerErrCount.splice(errIndex, 1);
+    await consumer.commitOffsets([partTopOff]);
+    return;
+    //must use tranaction with bulkwrite bcs of dupl key error
   }
 
   public async insertDlqResolved(resolved: any, consErrCount) {
