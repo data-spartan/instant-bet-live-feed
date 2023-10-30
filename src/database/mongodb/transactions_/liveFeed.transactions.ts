@@ -9,9 +9,9 @@ import {
   SessionOperation,
   startSession,
 } from 'mongoose';
-import { asyncScheduler } from 'rxjs';
+
 import { joinObjProps } from 'src/utils/joinObjectProps.utils';
-import { LiveFeed } from '../schemas/liveFeed.schema';
+import { errorCounter } from 'src/kafka/errorRetrier.helper';
 
 export async function liveFeedTransaction(
   repo: any,
@@ -22,7 +22,7 @@ export async function liveFeedTransaction(
   const session = await repo.startSession();
   try {
     session.startTransaction();
-    await this.repo.bulkWrite(updateArr);
+    await repo.bulkWrite(updateArr);
     await session.commitTransaction();
     // await session.endSession();
     return true;
@@ -30,25 +30,8 @@ export async function liveFeedTransaction(
     await session.abortTransaction();
 
     const pattern = joinObjProps(partTopOff);
-    let index;
-    let found;
-    if (consErrCount.length) {
-      for (const [index_, item] of consErrCount.entries()) {
-        if (item['pattern'] === pattern) {
-          index = index_;
-          console.log(index);
-          item['count'] += 1;
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        index = consErrCount.push({ pattern, count: 1 }) - 1;
-      }
-    } else {
-      index = 0;
-      consErrCount.push({ pattern, count: 1 });
-    }
+    const index = await errorCounter(consErrCount, pattern);
+    console.log(consErrCount);
     return { error: new RpcException(`STEFAN CAR ${e}`), errIndex: index };
   } finally {
     await session.endSession();

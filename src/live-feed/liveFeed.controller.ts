@@ -58,11 +58,11 @@ export class LiveFeedController {
     //   await consumer.commitOffsets([{ topic, partition, offset }]);
     //   this.consumerErrCount['count'] = 0;
     // }
-    const inserted = await this.liveFeedService.insertFeed(
-      data,
-      // this.consumerErrCount,
-      { topic, partition, offset },
-    );
+    await this.liveFeedService.insertFeed(data, consumer, {
+      topic,
+      partition,
+      offset,
+    });
     // if (inserted) {
     //   await consumer.commitOffsets([{ topic, partition, offset }]);
     //   this.consumerErrCount['count'] = 0;

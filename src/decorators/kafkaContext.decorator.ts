@@ -11,6 +11,7 @@ export const KafkaCtx = createParamDecorator(
     const partition = kafkaCtx.getPartition();
     const topic = kafkaCtx.getTopic();
     const consumer = kafkaCtx.getConsumer();
-    return { kafkaCtx, offset, partition, topic, consumer };
+    const producer = kafkaCtx.getProducer();
+    return { kafkaCtx, offset, partition, topic, consumer, producer };
   },
 );

@@ -17,7 +17,7 @@ export const configKafka = (
       sessionTimeout: 15000,
       retry: { retries: retries, factor: 0, multiplier: 1 }, //after n retries consumer is restarted and reading is tried again
       //but retrying is going indefinite(intenitonal nestjs kafka behaviour) so i implmeneted custom retry logic
-      readUncommitted: false,
+      readUncommitted: true,
     },
     subscribe: {
       topics: topics.split(','),
@@ -26,6 +26,7 @@ export const configKafka = (
     },
     run: {
       autoCommit: false,
+      partitionsConsumedConcurrently: 2,
     },
   },
 });

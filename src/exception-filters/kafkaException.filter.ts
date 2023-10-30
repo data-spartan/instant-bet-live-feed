@@ -13,7 +13,7 @@ export class KafkaExceptionFilter implements RpcExceptionFilter<RpcException> {
   catch(exception: RpcException, host: ArgumentsHost): Observable<any> {
     const adapter = host.switchToRpc().getContext();
     // console.log(adapter);
-    console.log('TEST');
+    // console.log('TEST');
     throw exception.getError();
   }
 }

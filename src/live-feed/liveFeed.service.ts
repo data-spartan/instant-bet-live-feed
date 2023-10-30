@@ -6,6 +6,7 @@ import {
   RpcException,
 } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
+import { Consumer, TopicPartitionOffsetAndMetadata } from 'kafkajs';
 import { Model, MongooseError } from 'mongoose';
 import { type } from 'os';
 import { Exception } from 'sass';
@@ -38,9 +39,9 @@ export class LiveFeedService {
     this.consumerErrCount = [];
   }
   public async insertFeed(
-    feed: any,
-    // consErrCount: Object[],
-    partTopOff: Object,
+    feed,
+    consumer: Consumer,
+    partTopOff: TopicPartitionOffsetAndMetadata,
   ) {
     // const session = await this.feedRepo.startSession();
     const updateArr = feed.map((obj) => ({
@@ -82,7 +83,6 @@ export class LiveFeedService {
         // setDefaultsOnInsert: true,
       },
     }));
-
     const insertFeed = await liveFeedTransaction(
       this.feedRepo,
       updateArr,
@@ -90,33 +90,18 @@ export class LiveFeedService {
       partTopOff,
     );
     if (!insertFeed['error']) {
+      await consumer.commitOffsets([partTopOff]);
       return insertFeed;
     }
-    throw insertFeed['error'];
-
-    // try {
-    //   session.startTransaction();
-    //   await this.feedRepo.bulkWrite(updateArr);
-    //   await session.commitTransaction();
-    //   // await session.endSession();
-    //   return true;
-    // } catch (e) {
-    //   await session.abortTransaction();
-
-    //   const pattern = joinObjProps(partTopOff);
-    //   for (const item of consErrCount) {
-    //     if (item['pattern'] === pattern) {
-    //       item['count'] += 1;
-    //       break;
-    //     }
-    //     consErrCount.push({ pattern, count: 1 });
-    //   }
-    //   // consErrCoun['count'] += 1;
-
-    //   throw new RpcException(`STEFAN CAR ${e}`);
-    // } finally {
-    //   await session.endSession();
-    // }
+    const errIndex = insertFeed['errIndex'];
+    if (this.consumerErrCount[errIndex]['count'] !== this.defaultRetries) {
+      console.log('IN ERROR');
+      throw insertFeed['error'];
+    }
+    // this.consumerErrCount[errIndex] = '';
+    this.consumerErrCount.splice(errIndex, 1);
+    await consumer.commitOffsets([partTopOff]);
+    return;
   }
 
   public async insertResolved(resolved: any, consErrCount) {
