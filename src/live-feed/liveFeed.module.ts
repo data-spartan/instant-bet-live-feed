@@ -8,11 +8,14 @@ import {
 import { LiveFeedService } from './liveFeed.service';
 import { LiveFeedController } from './liveFeed.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { LiveFeed, LiveFeedSchema } from 'src/database/schemas/liveFeed.schema';
+import {
+  LiveFeed,
+  LiveFeedSchema,
+} from 'src/database/mongodb/schemas/liveFeed.schema';
 import {
   LiveFeedResolved,
   LiveFeedResolvedSchema,
-} from 'src/database/schemas/liveFeedResolved.schema';
+} from 'src/database/mongodb/schemas/liveFeedResolved.schema';
 import { KafkaOptions } from 'src/interfaces/kafkaOptions.interfaces';
 // import { CreateConsumer } from 'src/kafka/createConsumer';
 import { Kafka } from 'kafkajs';

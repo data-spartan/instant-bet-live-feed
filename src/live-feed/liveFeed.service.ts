@@ -1,4 +1,5 @@
 import { HttpException, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   ClientKafka,
   KafkaRetriableException,
@@ -11,27 +12,41 @@ import { Exception } from 'sass';
 import {
   LiveFeed,
   LiveFeedDocument,
-} from 'src/database/schemas/liveFeed.schema';
+} from 'src/database/mongodb/schemas/liveFeed.schema';
 import {
   LiveFeedResolved,
   LiveFeedResolvedDocument,
-} from 'src/database/schemas/liveFeedResolved.schema';
+} from 'src/database/mongodb/schemas/liveFeedResolved.schema';
+import { liveFeedTransaction } from 'src/database/mongodb/transactions_/liveFeed.transactions';
 import { KafkaExceptionFilter } from 'src/exception-filters/kafkaException.filter';
+import { joinObjProps } from 'src/utils/joinObjectProps.utils';
 
 @Injectable()
 export class LiveFeedService {
+  private defaultRetries;
+  private consumerErrCount;
   constructor(
     @InjectModel(LiveFeed.name)
     private readonly feedRepo: Model<LiveFeedDocument>,
     @InjectModel(LiveFeedResolved.name)
     private readonly resolvedRepo: Model<LiveFeedResolvedDocument>,
-  ) {}
-  public async insertFeed(feed: any, consErrCount: number) {
-    const session = await this.feedRepo.startSession();
+    private readonly configService: ConfigService,
+  ) {
+    this.defaultRetries = Number(
+      this.configService.get('KAFKA_DEFAULT_RETRIES'),
+    );
+    this.consumerErrCount = [];
+  }
+  public async insertFeed(
+    feed: any,
+    // consErrCount: Object[],
+    partTopOff: Object,
+  ) {
+    // const session = await this.feedRepo.startSession();
     const updateArr = feed.map((obj) => ({
       updateOne: {
         filter: {
-          _id: obj.fixtureId,
+          _d: obj.fixtureId,
           updatedAt: { $lte: obj.sentTime },
           //update only latest sent fixtures
           // (can happen that producer send 2 exact fixtures to diff partitions), keep only latest
@@ -68,19 +83,40 @@ export class LiveFeedService {
       },
     }));
 
-    try {
-      session.startTransaction();
-      await this.feedRepo.bulkWrite(updateArr);
-      await session.commitTransaction();
-      // await session.endSession();
-      return true;
-    } catch (e) {
-      await session.abortTransaction();
-      consErrCount['count'] += 1;
-      throw new RpcException(`STEFAN CAR ${e}`);
-    } finally {
-      await session.endSession();
+    const insertFeed = await liveFeedTransaction(
+      this.feedRepo,
+      updateArr,
+      this.consumerErrCount,
+      partTopOff,
+    );
+    if (!insertFeed['error']) {
+      return insertFeed;
     }
+    throw insertFeed['error'];
+
+    // try {
+    //   session.startTransaction();
+    //   await this.feedRepo.bulkWrite(updateArr);
+    //   await session.commitTransaction();
+    //   // await session.endSession();
+    //   return true;
+    // } catch (e) {
+    //   await session.abortTransaction();
+
+    //   const pattern = joinObjProps(partTopOff);
+    //   for (const item of consErrCount) {
+    //     if (item['pattern'] === pattern) {
+    //       item['count'] += 1;
+    //       break;
+    //     }
+    //     consErrCount.push({ pattern, count: 1 });
+    //   }
+    //   // consErrCoun['count'] += 1;
+
+    //   throw new RpcException(`STEFAN CAR ${e}`);
+    // } finally {
+    //   await session.endSession();
+    // }
   }
 
   public async insertResolved(resolved: any, consErrCount) {

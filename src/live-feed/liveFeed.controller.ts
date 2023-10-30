@@ -24,6 +24,7 @@ import { CustomKafkaContext } from 'src/interfaces/kafkaContext.interface';
 import { CatchExceptionInterceptor } from 'src/interceptors/kafkaConsumer.interceptor';
 import { Console } from 'console';
 import { ConfigService } from '@nestjs/config';
+import { joinObjProps } from 'src/utils/joinObjectProps.utils';
 
 @Controller('feed')
 export class LiveFeedController {
@@ -32,17 +33,17 @@ export class LiveFeedController {
   private liveFeedErrThrehsold;
   private liveResolvedErrThrehsold;
   private dlqErrThrehsold;
-  private defaultRetries;
+  // private defaultRetries;
   constructor(
     private readonly liveFeedService: LiveFeedService,
-    private readonly configService: ConfigService,
+    // private readonly configService: ConfigService,
     @Inject('LIVE_FEED') private readonly clientKafka: ClientKafka,
   ) {
-    this.consumerErrCount = { count: 0 };
-    this.producerErrCount = { count: 0 };
-    this.defaultRetries = Number(
-      this.configService.get('KAFKA_DEFAULT_RETRIES'),
-    );
+    // this.consumerErrCount = [];
+    // // this.producerErrCount = { count: 0 };
+    // this.defaultRetries = Number(
+    //   this.configService.get('KAFKA_DEFAULT_RETRIES'),
+    // );
   }
 
   // @UseInterceptors(CatchExceptionInterceptor)
@@ -52,69 +53,69 @@ export class LiveFeedController {
     @KafkaCtx()
     { offset, partition, topic, consumer }: CustomKafkaContext,
   ) {
-    if (this.consumerErrCount['count'] === this.defaultRetries) {
-      console.log('IN ERROR');
-      await consumer.commitOffsets([{ topic, partition, offset }]);
-      this.consumerErrCount['count'] = 0;
-    }
+    // if (this.consumerErrCount['count'] === this.defaultRetries) {
+    //   console.log('IN ERROR');
+    //   await consumer.commitOffsets([{ topic, partition, offset }]);
+    //   this.consumerErrCount['count'] = 0;
+    // }
     const inserted = await this.liveFeedService.insertFeed(
       data,
-      this.consumerErrCount,
+      // this.consumerErrCount,
+      { topic, partition, offset },
     );
-    if (inserted) {
-      await consumer.commitOffsets([{ topic, partition, offset }]);
-      this.consumerErrCount['count'] = 0;
-    }
-    return 'TEST';
+    // if (inserted) {
+    //   await consumer.commitOffsets([{ topic, partition, offset }]);
+    //   this.consumerErrCount['count'] = 0;
+    // }
     // context.getProducer().send({ topic: 'resolve_tickets', messages: [data] });
   }
 
-  @EventPattern('live_resolved')
-  async liveResolved(
-    @Payload() data,
-    @KafkaCtx()
-    { offset, partition, topic, consumer }: CustomKafkaContext,
-  ) {
-    //extremely imporatant that after n retries you send resolved data to dlq bcs ticket payment depends on it
-    if (this.consumerErrCount['count'] === 5) {
-      //SEND TO DLQ
-      this.clientKafka.emit('dlq_resolved', data);
-      await consumer.commitOffsets([{ topic, partition, offset }]);
-      this.consumerErrCount['count'] = 0;
-    }
+  //   @EventPattern('live_resolved')
+  //   async liveResolved(
+  //     @Payload() data,
+  //     @KafkaCtx()
+  //     { offset, partition, topic, consumer }: CustomKafkaContext,
+  //   ) {
+  //     //extremely imporatant that after n retries you send resolved data to dlq bcs ticket payment depends on it
+  //     if (this.consumerErrCount['count'] === 5) {
+  //       //SEND TO DLQ
+  //       this.clientKafka.emit('dlq_resolved', data);
+  //       await consumer.commitOffsets([{ topic, partition, offset }]);
+  //       this.consumerErrCount['count'] = 0;
+  //     }
 
-    const toResolveTickets = await this.liveFeedService.insertResolved(
-      data,
-      this.consumerErrCount,
-    );
-    if (toResolveTickets) {
-      this.clientKafka.emit('resolve_tickets', toResolveTickets);
-    }
-    await consumer.commitOffsets([{ topic, partition, offset }]);
-    console.log('POSLE COMMITA');
-  }
+  //     const toResolveTickets = await this.liveFeedService.insertResolved(
+  //       data,
+  //       this.consumerErrCount,
+  //     );
+  //     if (toResolveTickets) {
+  //       this.clientKafka.emit('resolve_tickets', toResolveTickets);
+  //     }
+  //     await consumer.commitOffsets([{ topic, partition, offset }]);
+  //     console.log('POSLE COMMITA');
+  //   }
 
-  // @EventPattern('resolve_tickets')
-  // async liveGames(
-  //   @Payload() data,
-  //   @KafkaCtx()
-  //   { kafkaCtx, offset, partition, topic, consumer }: CustomKafkaContext,
-  // ) {
-  //   await consumer.commitOffsets([{ topic, partition, offset }]);
-  //   // this.liveFeedService.insertFeed(data);
-  // }
+  //   // @EventPattern('resolve_tickets')
+  //   // async liveGames(
+  //   //   @Payload() data,
+  //   //   @KafkaCtx()
+  //   //   { kafkaCtx, offset, partition, topic, consumer }: CustomKafkaContext,
+  //   // ) {
+  //   //   await consumer.commitOffsets([{ topic, partition, offset }]);
+  //   //   // this.liveFeedService.insertFeed(data);
+  //   // }
 
-  @EventPattern('dlq_resolved')
-  async dlqResolved(
-    @Payload() data,
-    { kafkaCtx, offset, partition, topic, consumer }: CustomKafkaContext,
-  ) {
-    if (this.consumerErrCount['count'] === 10) {
-      //SEND NOTIFICATION TO SLACK
-      // await consumer.commitOffsets([{ topic, partition, offset }]);
-      this.consumerErrCount['count'] = 0;
-    }
-    await this.liveFeedService.insertDlqResolved(data, this.consumerErrCount);
-    await consumer.commitOffsets([{ topic, partition, offset }]);
-  }
+  //   @EventPattern('dlq_resolved')
+  //   async dlqResolved(
+  //     @Payload() data,
+  //     { kafkaCtx, offset, partition, topic, consumer }: CustomKafkaContext,
+  //   ) {
+  //     if (this.consumerErrCount['count'] === 10) {
+  //       //SEND NOTIFICATION TO SLACK
+  //       // await consumer.commitOffsets([{ topic, partition, offset }]);
+  //       this.consumerErrCount['count'] = 0;
+  //     }
+  //     await this.liveFeedService.insertDlqResolved(data, this.consumerErrCount);
+  //     await consumer.commitOffsets([{ topic, partition, offset }]);
+  //   }
 }
