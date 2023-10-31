@@ -1,9 +1,9 @@
-export async function errorCounter(consErrCount, pattern) {
+export async function errorCounter(errCount, pattern) {
   let index;
   let found;
-  console.log(consErrCount);
-  if (consErrCount.length) {
-    for (const [index_, item] of consErrCount.entries()) {
+  console.log(errCount);
+  if (errCount.length) {
+    for (const [index_, item] of errCount.entries()) {
       if (item['pattern'] === pattern) {
         index = index_;
         item['count'] += 1;
@@ -12,11 +12,13 @@ export async function errorCounter(consErrCount, pattern) {
       }
     }
     if (!found) {
-      index = consErrCount.push({ pattern, count: 1 }) - 1;
+      //if consErrCount is not empty but entry with that pattern doesnt exists
+      index = errCount.push({ pattern, count: 1 }) - 1;
     }
   } else {
+    //only when consErrCount is empty(first error ever)
     index = 0;
-    consErrCount.push({ pattern, count: 1 });
+    errCount.push({ pattern, count: 1 });
   }
   return index;
 }

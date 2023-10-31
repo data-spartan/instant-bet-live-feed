@@ -1,4 +1,4 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { ConsoleLogger, HttpException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   ClientKafka,
@@ -20,12 +20,16 @@ import {
 } from 'src/database/mongodb/schemas/liveFeedResolved.schema';
 import { liveFeedTransaction } from 'src/database/mongodb/transactions_/liveFeed.transactions';
 import { KafkaExceptionFilter } from 'src/exception-filters/kafkaException.filter';
+import { producerErrorHandler } from 'src/kafka/producerHandler';
+import { kafkaProducer } from 'src/kafka/producerKafka';
 import { joinObjProps } from 'src/utils/joinObjectProps.utils';
 
 @Injectable()
 export class LiveFeedService {
-  private defaultRetries;
+  private defaultConsumerRetries;
+  private defaultProducerRetries;
   private consumerErrCount;
+  private producerErrCount;
   constructor(
     @InjectModel(LiveFeed.name)
     private readonly feedRepo: Model<LiveFeedDocument>,
@@ -33,21 +37,25 @@ export class LiveFeedService {
     private readonly resolvedRepo: Model<LiveFeedResolvedDocument>,
     private readonly configService: ConfigService,
   ) {
-    this.defaultRetries = Number(
-      this.configService.get('KAFKA_DEFAULT_RETRIES'),
+    this.defaultConsumerRetries = Number(
+      this.configService.get('KAFKA_CONSUMER_DEFAULT_RETRIES'),
+    );
+    this.defaultProducerRetries = Number(
+      this.configService.get('KAFKA_PRODUCER_DEFAULT_RETRIES'),
     );
     this.consumerErrCount = [];
+    this.producerErrCount = [];
   }
   public async insertFeed(
     feed,
     consumer: Consumer,
-    partTopOff: TopicPartitionOffsetAndMetadata,
+    topPartOff: TopicPartitionOffsetAndMetadata,
   ) {
     // const session = await this.feedRepo.startSession();
     const updateArr = feed.map((obj) => ({
       updateOne: {
         filter: {
-          _d: obj.fixtureId,
+          _id: obj.fixtureId,
           updatedAt: { $lte: obj.sentTime },
           //update only latest sent fixtures
           // (can happen that producer send 2 exact fixtures to diff partitions), keep only latest
@@ -87,35 +95,35 @@ export class LiveFeedService {
       this.feedRepo,
       updateArr,
       this.consumerErrCount,
-      partTopOff,
+      topPartOff,
     );
-    if (!insertFeed['error']) {
-      await consumer.commitOffsets([partTopOff]);
-      return insertFeed;
-    }
-    const errIndex = insertFeed['errIndex'];
-    if (this.consumerErrCount[errIndex]['count'] !== this.defaultRetries) {
-      console.log('IN ERROR');
-      throw insertFeed['error'];
-    }
 
-    this.consumerErrCount.splice(errIndex, 1);
-    await consumer.commitOffsets([partTopOff]);
-    return;
+    if (insertFeed['errIndex']) {
+      const errIndex = insertFeed['errIndex'];
+      if (
+        this.consumerErrCount[errIndex]['count'] <= this.defaultConsumerRetries
+      ) {
+        console.log('IN ERROR', errIndex);
+        throw insertFeed['error'];
+      } else {
+      }
+    }
+    await consumer.commitOffsets([topPartOff]);
+    return true;
   }
 
   public async insertResolved(
     resolvedData: any,
     consumer: Consumer,
     producer: Producer,
-    partTopOff: TopicPartitionOffsetAndMetadata,
+    topPartOff: TopicPartitionOffsetAndMetadata,
   ) {
     // const session = await this.resolvedRepo.startSession();
     const toResolveTickets = [];
     const updateArr = resolvedData.map((obj) => ({
       updateOne: {
         filter: {
-          _id: obj.fixtureId,
+          _d: obj.fixtureId,
         },
         update: {
           $setOnInsert: {
@@ -136,36 +144,62 @@ export class LiveFeedService {
         upsert: true,
       },
     }));
+
     const resolved = await liveFeedTransaction(
       this.resolvedRepo,
       updateArr,
       this.consumerErrCount,
-      partTopOff,
+      topPartOff,
     );
-    if (!resolved['error']) {
-      if (toResolveTickets) {
-        await producer.send({
-          topic: 'resolve_tickets',
-          messages: toResolveTickets,
-        });
+
+    if (resolved['errIndex']) {
+      const errIndex = resolved['errIndex'];
+      if (
+        this.consumerErrCount[errIndex]['count'] <= this.defaultConsumerRetries
+      ) {
+        console.log('IN ERROR CONSUMER', this.consumerErrCount[errIndex]);
+        throw resolved['error'];
+      } else {
+        //TODO create separate mciroservice which will take care of dlq
+        const toSlack = await kafkaProducer(
+          resolvedData,
+          'dlq_resolve',
+          producer,
+          -1,
+          this.producerErrCount,
+          topPartOff,
+          this.defaultProducerRetries,
+          'sent_dlq',
+        );
+        this.consumerErrCount.splice(errIndex, 1);
+        console.log('CONSUMER ERR COUNT SPLICED');
+
+        if (toSlack) {
+          //TODO Send to slack
+          console.log('SENT TO SLACK');
+          return;
+        }
       }
-      await consumer.commitOffsets([partTopOff]);
-      return;
     }
-    const errIndex = resolved['errIndex'];
-    if (this.consumerErrCount[errIndex]['count'] !== this.defaultRetries) {
-      console.log('IN ERROR');
-      throw resolved['error'];
-    } else {
-      await producer.send({
-        topic: 'dlq_resolved',
-        messages: resolvedData,
-      });
+    if (!resolved['errIndex']) {
+      if (toResolveTickets) {
+        console.log('IN RESOLVE TIKCETS');
+        //toResolveTickets doesnt need to be sent via dlq bcs non-sent resolved data is sent to 'dlq_resolved'
+        await kafkaProducer(
+          toResolveTickets,
+          'resolve_tickets',
+          producer,
+          -1,
+          this.producerErrCount,
+          topPartOff,
+          this.defaultProducerRetries,
+        );
+      }
     }
-    // this.consumerErrCount[errIndex] = '';
-    this.consumerErrCount.splice(errIndex, 1);
-    await consumer.commitOffsets([partTopOff]);
-    return;
+
+    await consumer.commitOffsets([topPartOff]);
+    console.log('COMITTED RESOLVED');
+    return true;
     //must use tranaction with bulkwrite bcs of dupl key error
   }
 

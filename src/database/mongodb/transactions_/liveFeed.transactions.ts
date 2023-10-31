@@ -17,7 +17,7 @@ export async function liveFeedTransaction(
   repo: any,
   updateArr: Object[],
   consErrCount: Object[],
-  partTopOff,
+  topPartOff,
 ) {
   const session = await repo.startSession();
   try {
@@ -29,7 +29,7 @@ export async function liveFeedTransaction(
   } catch (e) {
     await session.abortTransaction();
 
-    const pattern = joinObjProps(partTopOff);
+    const pattern = joinObjProps(topPartOff);
     const index = await errorCounter(consErrCount, pattern);
     console.log(consErrCount);
     return { error: new RpcException(`STEFAN CAR ${e}`), errIndex: index };

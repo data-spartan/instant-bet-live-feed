@@ -1,4 +1,5 @@
 import { Transport } from '@nestjs/microservices';
+import { Partitioners } from 'kafkajs';
 
 export const configKafka = (
   brokers: string,
@@ -26,7 +27,12 @@ export const configKafka = (
     },
     run: {
       autoCommit: false,
-      partitionsConsumedConcurrently: 2,
+      partitionsConsumedConcurrently: 1,
+    },
+    producer: {
+      createPartitioner: Partitioners.DefaultPartitioner,
+      retry: { retries: retries, factor: 0, multiplier: 1 },
+      allowAutoTopicCreation: false,
     },
   },
 });
