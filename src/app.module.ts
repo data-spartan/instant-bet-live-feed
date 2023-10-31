@@ -45,10 +45,10 @@ import { CatchExceptionInterceptor } from './interceptors/kafkaConsumer.intercep
       provide: APP_FILTER,
       useClass: KafkaExceptionFilter,
     },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CatchExceptionInterceptor,
-    },
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: CatchExceptionInterceptor,
+    // },
   ],
 })
 export class AppModule {}

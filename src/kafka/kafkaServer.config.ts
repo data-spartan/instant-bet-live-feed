@@ -1,4 +1,5 @@
 import { Transport } from '@nestjs/microservices';
+import { Partitioners } from 'kafkajs';
 
 export const configKafka = (
   brokers: string,
@@ -15,8 +16,9 @@ export const configKafka = (
       groupId: 'live-feed-consumer',
       heartbeatInterval: 2500,
       sessionTimeout: 15000,
-      retry: { retries: retries, factor: 0, multiplier: 1 },
-      readUncommitted: false,
+      retry: { retries: retries, factor: 0, multiplier: 1 }, //after n retries consumer is restarted and reading is tried again
+      //but retrying is going indefinite(intenitonal nestjs kafka behaviour) so i implmeneted custom retry logic
+      readUncommitted: true,
     },
     subscribe: {
       topics: topics.split(','),
@@ -25,6 +27,12 @@ export const configKafka = (
     },
     run: {
       autoCommit: false,
+      partitionsConsumedConcurrently: 1,
+    },
+    producer: {
+      createPartitioner: Partitioners.DefaultPartitioner,
+      retry: { retries: retries, factor: 0, multiplier: 1 },
+      allowAutoTopicCreation: false,
     },
   },
 });

@@ -24,26 +24,14 @@ import { CustomKafkaContext } from 'src/interfaces/kafkaContext.interface';
 import { CatchExceptionInterceptor } from 'src/interceptors/kafkaConsumer.interceptor';
 import { Console } from 'console';
 import { ConfigService } from '@nestjs/config';
+import { joinObjProps } from 'src/utils/joinObjectProps.utils';
 
 @Controller('feed')
 export class LiveFeedController {
-  private consumerErrCount;
-  private producerErrCount;
-  private liveFeedErrThrehsold;
-  private liveResolvedErrThrehsold;
-  private dlqErrThrehsold;
-  private defaultRetries;
   constructor(
     private readonly liveFeedService: LiveFeedService,
-    private readonly configService: ConfigService,
     @Inject('LIVE_FEED') private readonly clientKafka: ClientKafka,
-  ) {
-    this.consumerErrCount = { count: 0 };
-    this.producerErrCount = { count: 0 };
-    this.defaultRetries = Number(
-      this.configService.get('KAFKA_DEFAULT_RETRIES'),
-    );
-  }
+  ) {}
 
   // @UseInterceptors(CatchExceptionInterceptor)
   @EventPattern('live_feed')
@@ -52,46 +40,46 @@ export class LiveFeedController {
     @KafkaCtx()
     { offset, partition, topic, consumer }: CustomKafkaContext,
   ) {
-    if (this.consumerErrCount['count'] === this.defaultRetries) {
-      console.log('IN ERROR');
-      await consumer.commitOffsets([{ topic, partition, offset }]);
-      this.consumerErrCount['count'] = 0;
+    const resp = await this.liveFeedService.insertFeed(data, {
+      topic,
+      partition,
+      offset,
+    });
+
+    if (resp) {
+      consumer.commitOffsets([
+        {
+          topic,
+          partition,
+          offset,
+        },
+      ]);
+      console.log('COMITTED FEED');
     }
-    const inserted = await this.liveFeedService.insertFeed(
-      data,
-      this.consumerErrCount,
-    );
-    if (inserted) {
-      await consumer.commitOffsets([{ topic, partition, offset }]);
-      this.consumerErrCount['count'] = 0;
-    }
-    return 'TEST';
-    // context.getProducer().send({ topic: 'resolve_tickets', messages: [data] });
   }
 
   @EventPattern('live_resolved')
   async liveResolved(
     @Payload() data,
     @KafkaCtx()
-    { offset, partition, topic, consumer }: CustomKafkaContext,
+    { offset, partition, topic, consumer, producer }: CustomKafkaContext,
   ) {
-    //extremely imporatant that after n retries you send resolved data to dlq bcs ticket payment depends on it
-    if (this.consumerErrCount['count'] === 5) {
-      //SEND TO DLQ
-      this.clientKafka.emit('dlq_resolved', data);
-      await consumer.commitOffsets([{ topic, partition, offset }]);
-      this.consumerErrCount['count'] = 0;
-    }
+    const resp = await this.liveFeedService.insertResolved(data, producer, {
+      topic,
+      partition,
+      offset,
+    });
 
-    const toResolveTickets = await this.liveFeedService.insertResolved(
-      data,
-      this.consumerErrCount,
-    );
-    if (toResolveTickets) {
-      this.clientKafka.emit('resolve_tickets', toResolveTickets);
+    if (resp) {
+      consumer.commitOffsets([
+        {
+          topic,
+          partition,
+          offset,
+        },
+      ]);
+      console.log('COMITTED RESOLVED');
     }
-    await consumer.commitOffsets([{ topic, partition, offset }]);
-    console.log('POSLE COMMITA');
   }
 
   // @EventPattern('resolve_tickets')
@@ -100,6 +88,7 @@ export class LiveFeedController {
   //   @KafkaCtx()
   //   { kafkaCtx, offset, partition, topic, consumer }: CustomKafkaContext,
   // ) {
+  //   console.log('IN RESOLVE TICKETS');
   //   await consumer.commitOffsets([{ topic, partition, offset }]);
   //   // this.liveFeedService.insertFeed(data);
   // }
@@ -107,14 +96,25 @@ export class LiveFeedController {
   @EventPattern('dlq_resolved')
   async dlqResolved(
     @Payload() data,
-    { kafkaCtx, offset, partition, topic, consumer }: CustomKafkaContext,
+    @KafkaCtx()
+    { offset, partition, topic, consumer }: CustomKafkaContext,
   ) {
-    if (this.consumerErrCount['count'] === 10) {
-      //SEND NOTIFICATION TO SLACK
-      // await consumer.commitOffsets([{ topic, partition, offset }]);
-      this.consumerErrCount['count'] = 0;
+    console.log('IN DLQ_RESOLVED');
+    const resp = await this.liveFeedService.insertDlqResolved(data, {
+      topic,
+      partition,
+      offset,
+    });
+
+    if (resp) {
+      consumer.commitOffsets([
+        {
+          topic,
+          partition,
+          offset,
+        },
+      ]);
+      console.log('COMITTED DLQ RESOLVED');
     }
-    await this.liveFeedService.insertDlqResolved(data, this.consumerErrCount);
-    await consumer.commitOffsets([{ topic, partition, offset }]);
   }
 }
