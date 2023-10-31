@@ -11,6 +11,10 @@ import { Model, MongooseError } from 'mongoose';
 import { type } from 'os';
 import { Exception } from 'sass';
 import {
+  DlqResolved,
+  DlqResolvedDocument,
+} from 'src/database/mongodb/schemas/dlqResolved.schema';
+import {
   LiveFeed,
   LiveFeedDocument,
 } from 'src/database/mongodb/schemas/liveFeed.schema';
@@ -19,10 +23,8 @@ import {
   LiveFeedResolvedDocument,
 } from 'src/database/mongodb/schemas/liveFeedResolved.schema';
 import { liveFeedTransaction } from 'src/database/mongodb/transactions_/liveFeed.transactions';
-import { KafkaExceptionFilter } from 'src/exception-filters/kafkaException.filter';
-import { producerErrorHandler } from 'src/kafka/producerHandler';
+
 import { kafkaProducer } from 'src/kafka/producerKafka';
-import { joinObjProps } from 'src/utils/joinObjectProps.utils';
 
 @Injectable()
 export class LiveFeedService {
@@ -35,6 +37,8 @@ export class LiveFeedService {
     private readonly feedRepo: Model<LiveFeedDocument>,
     @InjectModel(LiveFeedResolved.name)
     private readonly resolvedRepo: Model<LiveFeedResolvedDocument>,
+    @InjectModel(DlqResolved.name)
+    private readonly dlqResolvedRepo: Model<DlqResolvedDocument>,
     private readonly configService: ConfigService,
   ) {
     this.defaultConsumerRetries = Number(
@@ -46,11 +50,7 @@ export class LiveFeedService {
     this.consumerErrCount = [];
     this.producerErrCount = [];
   }
-  public async insertFeed(
-    feed,
-    consumer: Consumer,
-    topPartOff: TopicPartitionOffsetAndMetadata,
-  ) {
+  public async insertFeed(feed, topPartOff: TopicPartitionOffsetAndMetadata) {
     // const session = await this.feedRepo.startSession();
     const updateArr = feed.map((obj) => ({
       updateOne: {
@@ -105,16 +105,14 @@ export class LiveFeedService {
       ) {
         console.log('IN ERROR', errIndex);
         throw insertFeed['error'];
-      } else {
       }
     }
-    await consumer.commitOffsets([topPartOff]);
+    // await consumer.commitOffsets([topPartOff]);
     return true;
   }
 
   public async insertResolved(
     resolvedData: any,
-    consumer: Consumer,
     producer: Producer,
     topPartOff: TopicPartitionOffsetAndMetadata,
   ) {
@@ -123,7 +121,7 @@ export class LiveFeedService {
     const updateArr = resolvedData.map((obj) => ({
       updateOne: {
         filter: {
-          _d: obj.fixtureId,
+          _id: obj.fixtureId,
         },
         update: {
           $setOnInsert: {
@@ -152,6 +150,9 @@ export class LiveFeedService {
       topPartOff,
     );
 
+    //Regarding resolved data its cruccial not to commit messages until all operations are executed successfuly
+    //otherwise trigger for resolving payed tickets wont we executed bcs that message is already commited
+    //e.g. toResolveTickets is sent to resolve_tickets topic
     if (resolved['errIndex']) {
       const errIndex = resolved['errIndex'];
       if (
@@ -159,32 +160,34 @@ export class LiveFeedService {
       ) {
         console.log('IN ERROR CONSUMER', this.consumerErrCount[errIndex]);
         throw resolved['error'];
-      } else {
-        //TODO create separate mciroservice which will take care of dlq
-        const toSlack = await kafkaProducer(
-          resolvedData,
-          'dlq_resolve',
-          producer,
-          -1,
-          this.producerErrCount,
-          topPartOff,
-          this.defaultProducerRetries,
-          'sent_dlq',
-        );
-        this.consumerErrCount.splice(errIndex, 1);
-        console.log('CONSUMER ERR COUNT SPLICED');
+      }
+      //TODO create separate mciroservice which will take care of dlq
+      const toSlack = await kafkaProducer(
+        resolvedData,
+        'dlq_resolved',
+        producer,
+        -1,
+        this.producerErrCount,
+        topPartOff,
+        this.defaultProducerRetries,
+        'sent_dlq',
+      );
+      this.consumerErrCount.splice(errIndex, 1);
+      console.log('CONSUMER ERR COUNT SPLICED');
 
-        if (toSlack) {
-          //TODO Send to slack
-          console.log('SENT TO SLACK');
-          return;
-        }
+      if (toSlack) {
+        //TODO Send to slack
+        // don commit after slack message, try until resolved data
+        // is writen to db and sent to resolve_tickets topic successfully
+        console.log('SENT TO SLACK');
+        return false;
       }
     }
     if (!resolved['errIndex']) {
       if (toResolveTickets) {
         console.log('IN RESOLVE TIKCETS');
         //toResolveTickets doesnt need to be sent via dlq bcs non-sent resolved data is sent to 'dlq_resolved'
+        //from dlq_resolved topic and associated microservice we again try to write in database
         await kafkaProducer(
           toResolveTickets,
           'resolve_tickets',
@@ -196,16 +199,16 @@ export class LiveFeedService {
         );
       }
     }
-
-    await consumer.commitOffsets([topPartOff]);
-    console.log('COMITTED RESOLVED');
+    //commit only if all opeartions are successfull
+    // await consumer.commitOffsets([topPartOff]);
     return true;
-    //must use tranaction with bulkwrite bcs of dupl key error
   }
 
-  public async insertDlqResolved(resolved: any, consErrCount) {
-    const session = await this.feedRepo.startSession();
-    const updateArr = resolved.map((obj) => ({
+  public async insertDlqResolved(
+    resolvedDlq: any,
+    topPartOff: TopicPartitionOffsetAndMetadata,
+  ) {
+    const updateArr = resolvedDlq.map((obj) => ({
       updateOne: {
         filter: {
           _id: obj.fixtureId,
@@ -226,18 +229,24 @@ export class LiveFeedService {
         upsert: true,
       },
     }));
-    //must use tranaction with bulkwrite bcs of dupl key error
-    try {
-      session.startTransaction();
-      await this.resolvedRepo.bulkWrite(updateArr);
-      await session.commitTransaction();
-    } catch (e) {
-      await session.abortTransaction();
-      consErrCount['count'] += 1;
-      throw new RpcException(`STEFAN CAR ${e}`);
-    } finally {
-      await session.endSession();
+    const dlqResolved = await liveFeedTransaction(
+      this.dlqResolvedRepo,
+      updateArr,
+      this.consumerErrCount,
+      topPartOff,
+    );
+    if (dlqResolved['errIndex']) {
+      const errIndex = dlqResolved['errIndex'];
+      if (
+        this.consumerErrCount[errIndex]['count'] <= this.defaultConsumerRetries
+      ) {
+        console.log('IN ERROR CONSUMER', this.consumerErrCount[errIndex]);
+        throw dlqResolved['error'];
+      }
+      return false; //in case when num of retries exceded limit, try all again until succeded
     }
+    // await consumer.commitOffsets([topPartOff]);
+    return true;
   }
 
   public async resolveTickets(resolvedId: number[]) {

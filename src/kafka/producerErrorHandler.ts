@@ -20,6 +20,6 @@ export const producerErrorHandler = async (
       }
     }
   }
-  // for resolve toResolveTickets in liveFeedService
+  // for resolve toResolveTickets in liveFeedService, there is no need for retry
   return;
 };

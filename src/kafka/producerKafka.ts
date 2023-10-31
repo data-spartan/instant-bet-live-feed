@@ -2,7 +2,7 @@ import { RpcException } from '@nestjs/microservices';
 import { Producer } from 'kafkajs';
 import { joinObjProps } from 'src/utils/joinObjectProps.utils';
 import { errorCounter } from './errorRetrier.helper';
-import { producerErrorHandler } from './producerHandler';
+import { producerErrorHandler } from './producerErrorHandler';
 
 export const kafkaProducer = async (
   data: string[] | Object,
@@ -29,6 +29,9 @@ export const kafkaProducer = async (
       error: new RpcException(`Producer Error: ${e}`),
       errIndex: index,
     };
+    //checks if number of producer retries is exceded or not
+    //if yes it returns true and triggers sending notification to slack
+    //if not it returns error to be thrown and cycle is repeated
     const value = await producerErrorHandler(
       sentDlq,
       dlqTopic,

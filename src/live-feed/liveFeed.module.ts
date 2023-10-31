@@ -21,12 +21,17 @@ import { KafkaOptions } from 'src/interfaces/kafkaOptions.interfaces';
 import { Kafka } from 'kafkajs';
 import { APP_FILTER } from '@nestjs/core';
 import { KafkaExceptionFilter } from 'src/exception-filters/kafkaException.filter';
+import {
+  DlqResolved,
+  DlqResolvedSchema,
+} from 'src/database/mongodb/schemas/dlqResolved.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: LiveFeed.name, schema: LiveFeedSchema },
       { name: LiveFeedResolved.name, schema: LiveFeedResolvedSchema },
+      { name: DlqResolved.name, schema: DlqResolvedSchema },
     ]),
     // ClientsModule.register([
     //   {

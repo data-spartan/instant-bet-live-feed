@@ -28,23 +28,10 @@ import { joinObjProps } from 'src/utils/joinObjectProps.utils';
 
 @Controller('feed')
 export class LiveFeedController {
-  // private consumerErrCount;
-  // private producerErrCount;
-  // private liveFeedErrThrehsold;
-  // private liveResolvedErrThrehsold;
-  // private dlqErrThrehsold;
-  // private defaultRetries;
   constructor(
     private readonly liveFeedService: LiveFeedService,
-    // private readonly configService: ConfigService,
     @Inject('LIVE_FEED') private readonly clientKafka: ClientKafka,
-  ) {
-    // this.consumerErrCount = [];
-    // // this.producerErrCount = { count: 0 };
-    // this.defaultRetries = Number(
-    //   this.configService.get('KAFKA_DEFAULT_RETRIES'),
-    // );
-  }
+  ) {}
 
   // @UseInterceptors(CatchExceptionInterceptor)
   @EventPattern('live_feed')
@@ -53,11 +40,22 @@ export class LiveFeedController {
     @KafkaCtx()
     { offset, partition, topic, consumer }: CustomKafkaContext,
   ) {
-    await this.liveFeedService.insertFeed(data, consumer, {
+    const resp = await this.liveFeedService.insertFeed(data, {
       topic,
       partition,
       offset,
     });
+
+    if (resp) {
+      consumer.commitOffsets([
+        {
+          topic,
+          partition,
+          offset,
+        },
+      ]);
+      console.log('COMITTED FEED');
+    }
   }
 
   @EventPattern('live_resolved')
@@ -66,36 +64,57 @@ export class LiveFeedController {
     @KafkaCtx()
     { offset, partition, topic, consumer, producer }: CustomKafkaContext,
   ) {
-    await this.liveFeedService.insertResolved(data, consumer, producer, {
+    const resp = await this.liveFeedService.insertResolved(data, producer, {
       topic,
       partition,
       offset,
     });
+
+    if (resp) {
+      consumer.commitOffsets([
+        {
+          topic,
+          partition,
+          offset,
+        },
+      ]);
+      console.log('COMITTED RESOLVED');
+    }
   }
 
-  @EventPattern('resolve_tickets')
-  async liveGames(
-    @Payload() data,
-    @KafkaCtx()
-    { kafkaCtx, offset, partition, topic, consumer }: CustomKafkaContext,
-  ) {
-    console.log('IN RESOLVE TICKETS');
-    await consumer.commitOffsets([{ topic, partition, offset }]);
-    // this.liveFeedService.insertFeed(data);
-  }
+  // @EventPattern('resolve_tickets')
+  // async liveGames(
+  //   @Payload() data,
+  //   @KafkaCtx()
+  //   { kafkaCtx, offset, partition, topic, consumer }: CustomKafkaContext,
+  // ) {
+  //   console.log('IN RESOLVE TICKETS');
+  //   await consumer.commitOffsets([{ topic, partition, offset }]);
+  //   // this.liveFeedService.insertFeed(data);
+  // }
 
   @EventPattern('dlq_resolved')
   async dlqResolved(
     @Payload() data,
     @KafkaCtx()
-    { kafkaCtx, offset, partition, topic, consumer }: CustomKafkaContext,
+    { offset, partition, topic, consumer }: CustomKafkaContext,
   ) {
     console.log('IN DLQ_RESOLVED');
-    // if (this.consumerErrCount['count'] === 10) {
-    //   //SEND NOTIFICATION TO SLACK
-    //   this.consumerErrCount['count'] = 0;
-    // }
-    // await this.liveFeedService.insertDlqResolved(data, this.consumerErrCount);
-    await consumer.commitOffsets([{ topic, partition, offset }]);
+    const resp = await this.liveFeedService.insertDlqResolved(data, {
+      topic,
+      partition,
+      offset,
+    });
+
+    if (resp) {
+      consumer.commitOffsets([
+        {
+          topic,
+          partition,
+          offset,
+        },
+      ]);
+      console.log('COMITTED DLQ RESOLVED');
+    }
   }
 }
