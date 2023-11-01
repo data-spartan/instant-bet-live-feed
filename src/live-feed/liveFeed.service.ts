@@ -23,9 +23,11 @@ import {
   LiveFeedResolved,
   LiveFeedResolvedDocument,
 } from 'src/database/mongodb/schemas/liveFeedResolved.schema';
-import { liveFeedTransaction } from 'src/database/mongodb/transactions_/liveFeed.transactions';
+import { TransactionService } from 'src/database/mongodb/transactions_/liveFeed.transactions';
+// import { liveFeedTransaction } from 'src/database/mongodb/transactions_/liveFeed.transactions';
+import { KafkaErrorHandler } from 'src/kafka/kafkaErrorHandler.service';
 
-import { kafkaProducer } from 'src/kafka/producerKafka';
+import { KafkaProducerService } from 'src/kafka/producerKafka';
 
 @Injectable()
 export class LiveFeedService {
@@ -42,6 +44,8 @@ export class LiveFeedService {
     private readonly dlqResolvedRepo: Model<DlqResolvedDocument>,
     private readonly configService: ConfigService,
     private readonly liveFeedQueries: LiveFeedQueries,
+    private readonly kafkaProducerService: KafkaProducerService,
+    private readonly transactionService: TransactionService,
   ) {
     this.defaultConsumerRetries = Number(
       this.configService.get('KAFKA_CONSUMER_DEFAULT_RETRIES'),
@@ -55,7 +59,7 @@ export class LiveFeedService {
   public async insertFeed(feed, topPartOff: TopicPartitionOffsetAndMetadata) {
     // const session = await this.feedRepo.startSession();
     const formatedData = await this.liveFeedQueries.insertFeedQueries(feed);
-    const insertFeed = await liveFeedTransaction(
+    const insertFeed = await this.transactionService.liveFeedTransaction(
       this.feedRepo,
       formatedData,
       this.consumerErrCount,
@@ -84,7 +88,7 @@ export class LiveFeedService {
 
     const { formatedData, toResolveTickets } =
       await this.liveFeedQueries.insertResolvedQuery(resolvedData);
-    const resolved = await liveFeedTransaction(
+    const resolved = await this.transactionService.liveFeedTransaction(
       this.resolvedRepo,
       formatedData,
       this.consumerErrCount,
@@ -103,7 +107,7 @@ export class LiveFeedService {
         throw resolved['error'];
       }
       //TODO create separate mciroservice which will take care of dlq
-      const toSlack = await kafkaProducer(
+      const toSlack = await this.kafkaProducerService.kafkaProducer(
         resolvedData,
         'dlq_resolved',
         producer,
@@ -129,7 +133,7 @@ export class LiveFeedService {
         console.log('IN RESOLVE TIKCETS');
         //toResolveTickets doesnt need to be sent via dlq bcs non-sent resolved data is sent to 'dlq_resolved'
         //from dlq_resolved topic and associated microservice we again try to write in database
-        await kafkaProducer(
+        await this.kafkaProducerService.kafkaProducer(
           toResolveTickets,
           'resolve_tickets',
           producer,
@@ -170,7 +174,7 @@ export class LiveFeedService {
         upsert: true,
       },
     }));
-    const dlqResolved = await liveFeedTransaction(
+    const dlqResolved = await this.transactionService.liveFeedTransaction(
       this.dlqResolvedRepo,
       updateArr,
       this.consumerErrCount,

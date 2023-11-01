@@ -26,6 +26,9 @@ import {
   DlqResolvedSchema,
 } from 'src/database/mongodb/schemas/dlqResolved.schema';
 import { LiveFeedQueries } from 'src/database/mongodb/queries/liveFeedService.queries';
+import { KafkaErrorHandler } from 'src/kafka/kafkaErrorHandler.service';
+import { TransactionService } from 'src/database/mongodb/transactions_/liveFeed.transactions';
+import { KafkaProducerService } from 'src/kafka/producerKafka';
 
 @Module({
   imports: [
@@ -63,6 +66,9 @@ import { LiveFeedQueries } from 'src/database/mongodb/queries/liveFeedService.qu
   providers: [
     LiveFeedService,
     LiveFeedQueries,
+    KafkaProducerService,
+    KafkaErrorHandler,
+    TransactionService,
     // {
     //   provide: APP_FILTER,
     //   useClass: KafkaExceptionFilter,
