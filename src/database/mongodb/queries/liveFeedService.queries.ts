@@ -74,5 +74,28 @@ export class LiveFeedQueries {
     return { formatedData, toResolveTickets };
   }
 
-  public async insertDlqResolvedQuery(resolvedDlq: any) {}
+  public async insertDlqResolvedQuery(resolvedDlq: any) {
+    const formatedData = resolvedDlq.map((obj) => ({
+      updateOne: {
+        filter: {
+          _id: obj.fixtureId,
+        },
+        update: {
+          $setOnInsert: {
+            _id: obj.fixtureId,
+          },
+          $set: {
+            status: obj.status,
+          },
+          $push: {
+            resolved: {
+              $each: obj.resolved,
+            },
+          },
+        },
+        upsert: true,
+      },
+    }));
+    return formatedData;
+  }
 }

@@ -56,7 +56,10 @@ export class LiveFeedService {
     this.consumerErrCount = [];
     this.producerErrCount = [];
   }
-  public async insertFeed(feed, topPartOff: TopicPartitionOffsetAndMetadata) {
+  public async insertFeed(
+    feed,
+    topPartOff: TopicPartitionOffsetAndMetadata,
+  ): Promise<boolean> {
     // const session = await this.feedRepo.startSession();
     const formatedData = await this.liveFeedQueries.insertFeedQueries(feed);
     const insertFeed = await this.transactionService.liveFeedTransaction(
@@ -83,7 +86,7 @@ export class LiveFeedService {
     resolvedData: any,
     producer: Producer,
     topPartOff: TopicPartitionOffsetAndMetadata,
-  ) {
+  ): Promise<boolean> {
     // const session = await this.resolvedRepo.startSession();
 
     const { formatedData, toResolveTickets } =
@@ -152,31 +155,12 @@ export class LiveFeedService {
   public async insertDlqResolved(
     resolvedDlq: any,
     topPartOff: TopicPartitionOffsetAndMetadata,
-  ) {
-    const updateArr = resolvedDlq.map((obj) => ({
-      updateOne: {
-        filter: {
-          _id: obj.fixtureId,
-        },
-        update: {
-          $setOnInsert: {
-            _id: obj.fixtureId,
-          },
-          $set: {
-            status: obj.status,
-          },
-          $push: {
-            resolved: {
-              $each: obj.resolved,
-            },
-          },
-        },
-        upsert: true,
-      },
-    }));
+  ): Promise<boolean> {
+    const formatedData =
+      await this.liveFeedQueries.insertDlqResolvedQuery(resolvedDlq);
     const dlqResolved = await this.transactionService.liveFeedTransaction(
       this.dlqResolvedRepo,
-      updateArr,
+      formatedData,
       this.consumerErrCount,
       topPartOff,
     );

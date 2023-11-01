@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { Session } from 'inspector';
+import { TopicPartitionOffsetAndMetadata } from 'kafkajs';
 import {
   ClientSession,
   Document,
@@ -10,6 +11,10 @@ import {
   SessionOperation,
   startSession,
 } from 'mongoose';
+import {
+  KafkaErrorCount,
+  KafkaErrorObject,
+} from 'src/interfaces/kafkaError.interface';
 import { KafkaErrorHandler } from 'src/kafka/kafkaErrorHandler.service';
 
 import { joinObjProps } from 'src/utils/joinObjectProps.utils';
@@ -18,14 +23,14 @@ export class TransactionService {
   constructor(private readonly kafkaErrorHanlder: KafkaErrorHandler) {}
   public async liveFeedTransaction(
     repo: any,
-    updateArr: Object[],
-    consErrCount: Object[],
-    topPartOff,
-  ) {
+    data: Object[],
+    consErrCount: KafkaErrorCount[],
+    topPartOff: TopicPartitionOffsetAndMetadata,
+  ): Promise<boolean | Promise<KafkaErrorObject>> {
     const session = await repo.startSession();
     try {
       session.startTransaction();
-      await repo.bulkWrite(updateArr);
+      await repo.bulkWrite(data);
       await session.commitTransaction();
       // await session.endSession();
       return true;

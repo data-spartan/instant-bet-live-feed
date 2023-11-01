@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   InheritAppConfig,
   KafkaOptions,
-} from './interfaces/kafkaOptions.interfaces';
+} from './interfaces/kafkaOptions.interface';
 import { KafkaExceptionFilter } from './exception-filters/kafkaException.filter';
 import { configKafka } from './config/kafkaServer.config';
 

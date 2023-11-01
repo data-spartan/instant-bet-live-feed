@@ -16,7 +16,7 @@ import {
   LiveFeedResolved,
   LiveFeedResolvedSchema,
 } from 'src/database/mongodb/schemas/liveFeedResolved.schema';
-import { KafkaOptions } from 'src/interfaces/kafkaOptions.interfaces';
+import { KafkaOptions } from 'src/interfaces/kafkaOptions.interface';
 // import { CreateConsumer } from 'src/kafka/createConsumer';
 import { Kafka } from 'kafkajs';
 import { APP_FILTER } from '@nestjs/core';

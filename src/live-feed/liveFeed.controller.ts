@@ -25,6 +25,7 @@ import { CatchExceptionInterceptor } from 'src/interceptors/kafkaConsumer.interc
 import { Console } from 'console';
 import { ConfigService } from '@nestjs/config';
 import { joinObjProps } from 'src/utils/joinObjectProps.utils';
+import { LiveFeedDocument } from 'src/database/mongodb/schemas/liveFeed.schema';
 
 @Controller('feed')
 export class LiveFeedController {

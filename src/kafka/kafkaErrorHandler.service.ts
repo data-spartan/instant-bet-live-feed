@@ -1,8 +1,13 @@
 import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
+import { KafkaErrorCount } from 'src/interfaces/kafkaError.interface';
 
 @Injectable()
 export class KafkaErrorHandler {
-  public async errorCounter(errCount, pattern) {
+  public async errorCounter(
+    errCount: KafkaErrorCount[],
+    pattern: string,
+  ): Promise<number> {
     let index;
     let found;
     console.log(errCount);
@@ -24,7 +29,7 @@ export class KafkaErrorHandler {
       index = 0;
       errCount.push({ pattern, count: 1 });
     }
-    return index;
+    return index; //position of kafkaerrcount object in array
   }
 
   public async producerErrorHandler(
@@ -32,7 +37,7 @@ export class KafkaErrorHandler {
     dlq,
     producerErrCount,
     defaultProducerRetries,
-  ) {
+  ): Promise<RpcException | boolean> {
     if (dlq) {
       if (sent['errIndex']) {
         const errIndex = sent['errIndex'];

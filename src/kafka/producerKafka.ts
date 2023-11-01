@@ -1,8 +1,9 @@
 import { RpcException } from '@nestjs/microservices';
-import { Producer } from 'kafkajs';
+import { Producer, TopicPartitionOffsetAndMetadata } from 'kafkajs';
 import { joinObjProps } from 'src/utils/joinObjectProps.utils';
 import { Injectable } from '@nestjs/common';
 import { KafkaErrorHandler } from './kafkaErrorHandler.service';
+import { KafkaErrorCount } from 'src/interfaces/kafkaError.interface';
 
 @Injectable()
 export class KafkaProducerService {
@@ -13,11 +14,11 @@ export class KafkaProducerService {
     topic: string,
     producer: Producer,
     acks: number,
-    producerErrCount: object,
-    topPartOff,
-    defaultProducerRetries,
+    producerErrCount: KafkaErrorCount[],
+    topPartOff: TopicPartitionOffsetAndMetadata,
+    defaultProducerRetries: number,
     dlqTopic: string | void,
-  ) {
+  ): Promise<void | boolean | RpcException> {
     try {
       await producer.send({
         topic: topic,
