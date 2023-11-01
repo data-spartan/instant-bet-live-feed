@@ -7,11 +7,13 @@ import {
   KafkaOptions,
 } from './interfaces/kafkaOptions.interfaces';
 import { KafkaExceptionFilter } from './exception-filters/kafkaException.filter';
-import { configKafka } from './kafka/kafkaServer.config';
+import { configKafka } from './config/kafkaServer.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
   const configService = app.get(ConfigService); //to use configService in main.ts need to first import ConfigModule in AppModule
+  const appPort = Number(configService.get('APP_PORT'));
 
   const KAFKA_BROKERS = configService.get('KAFKA_BROKERS');
   const KAFKA_TOPICS = configService.get('KAFKA_TOPICS');
@@ -33,7 +35,7 @@ async function bootstrap() {
   await app.startAllMicroservices();
   const micro = app.getMicroservices();
   // console.log(await micro[1]['server']);
-  await app.listen(3000);
+  await app.listen(appPort);
 }
 
 bootstrap();

@@ -10,6 +10,7 @@ import { Consumer, Producer, TopicPartitionOffsetAndMetadata } from 'kafkajs';
 import { Model, MongooseError } from 'mongoose';
 import { type } from 'os';
 import { Exception } from 'sass';
+import { LiveFeedQueries } from 'src/database/mongodb/queries/liveFeedService.queries';
 import {
   DlqResolved,
   DlqResolvedDocument,
@@ -40,6 +41,7 @@ export class LiveFeedService {
     @InjectModel(DlqResolved.name)
     private readonly dlqResolvedRepo: Model<DlqResolvedDocument>,
     private readonly configService: ConfigService,
+    private readonly liveFeedQueries: LiveFeedQueries,
   ) {
     this.defaultConsumerRetries = Number(
       this.configService.get('KAFKA_CONSUMER_DEFAULT_RETRIES'),
@@ -52,48 +54,10 @@ export class LiveFeedService {
   }
   public async insertFeed(feed, topPartOff: TopicPartitionOffsetAndMetadata) {
     // const session = await this.feedRepo.startSession();
-    const updateArr = feed.map((obj) => ({
-      updateOne: {
-        filter: {
-          _id: obj.fixtureId,
-          updatedAt: { $lte: obj.sentTime },
-          //update only latest sent fixtures
-          // (can happen that producer send 2 exact fixtures to diff partitions), keep only latest
-          //or consumer crashed and and didnt commit offset so it pulls multiple messages(could me multiple fixtures with same id, but sent in diff time )
-        },
-
-        update: {
-          $setOnInsert: {
-            _id: obj.fixtureId,
-            source: obj.source,
-            type: obj.type,
-            competitionString: obj.competitionString,
-            region: obj.region,
-            regionId: obj.regionId,
-            sport: obj.sport,
-            sportId: obj.sportId,
-            competition: obj.competition,
-            competitionId: obj.competitionId,
-            fixtureTimestamp: obj.fixtureTimestamp,
-            competitor1Id: obj.competitor1Id,
-            competitor1: obj.competitor1,
-            competitor2Id: obj.competitor2Id,
-            competitor2: obj.competitor2,
-          },
-          $set: {
-            scoreboard: obj.scoreboard,
-            games: obj.games,
-            timeSent: obj.time,
-          },
-        },
-
-        upsert: true,
-        // setDefaultsOnInsert: true,
-      },
-    }));
+    const formatedData = await this.liveFeedQueries.insertFeedQueries(feed);
     const insertFeed = await liveFeedTransaction(
       this.feedRepo,
-      updateArr,
+      formatedData,
       this.consumerErrCount,
       topPartOff,
     );
@@ -117,35 +81,12 @@ export class LiveFeedService {
     topPartOff: TopicPartitionOffsetAndMetadata,
   ) {
     // const session = await this.resolvedRepo.startSession();
-    const toResolveTickets = [];
-    const updateArr = resolvedData.map((obj) => ({
-      updateOne: {
-        filter: {
-          _id: obj.fixtureId,
-        },
-        update: {
-          $setOnInsert: {
-            _id: obj.fixtureId,
-          },
-          $set: {
-            status:
-              obj.status !== 'Ended'
-                ? obj.status
-                : toResolveTickets.push(obj.fixtureId) && obj.status,
-          },
-          $push: {
-            resolved: {
-              $each: obj.resolved,
-            },
-          },
-        },
-        upsert: true,
-      },
-    }));
 
+    const { formatedData, toResolveTickets } =
+      await this.liveFeedQueries.insertResolvedQuery(resolvedData);
     const resolved = await liveFeedTransaction(
       this.resolvedRepo,
-      updateArr,
+      formatedData,
       this.consumerErrCount,
       topPartOff,
     );

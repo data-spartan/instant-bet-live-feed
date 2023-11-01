@@ -25,13 +25,22 @@ import {
   DlqResolved,
   DlqResolvedSchema,
 } from 'src/database/mongodb/schemas/dlqResolved.schema';
+import { LiveFeedQueries } from 'src/database/mongodb/queries/liveFeedService.queries';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: LiveFeed.name, schema: LiveFeedSchema },
-      { name: LiveFeedResolved.name, schema: LiveFeedResolvedSchema },
-      { name: DlqResolved.name, schema: DlqResolvedSchema },
+      { name: LiveFeed.name, schema: LiveFeedSchema, collection: 'livefeed' },
+      {
+        name: LiveFeedResolved.name,
+        schema: LiveFeedResolvedSchema,
+        collection: 'livefeed.resolved',
+      },
+      {
+        name: DlqResolved.name,
+        schema: DlqResolvedSchema,
+        collection: 'dlq.resolved',
+      },
     ]),
     // ClientsModule.register([
     //   {
@@ -53,6 +62,7 @@ import {
   ],
   providers: [
     LiveFeedService,
+    LiveFeedQueries,
     // {
     //   provide: APP_FILTER,
     //   useClass: KafkaExceptionFilter,

@@ -27,4 +27,4 @@ import {
   ],
   exports: ['LIVE_FEED'],
 })
-export class GlobalModule {}
+export class GlobalModule {} //in hybrid apps if want to globaly use some module need to use it through global module decorator
