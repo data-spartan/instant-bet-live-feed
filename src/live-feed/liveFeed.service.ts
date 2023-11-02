@@ -60,6 +60,7 @@ export class LiveFeedService {
     feed,
     topPartOff: TopicPartitionOffsetAndMetadata,
   ): Promise<boolean> {
+    let errIndex: number;
     const queries = await this.liveFeedQueries.insertFeedQueries(feed);
     const insertFeed = await this.transactionService.liveFeedTransaction(
       this.feedRepo,
@@ -70,7 +71,7 @@ export class LiveFeedService {
 
     if (insertFeed['errIndex']) {
       // there is no need to retry more than defined retries or sent to dlq bcs feed is comming every 10s
-      const errIndex = insertFeed['errIndex'];
+      errIndex = insertFeed['errIndex'];
       if (
         this.consumerErrCount[errIndex]['count'] <=
         2 * this.defaultConsumerRetries
@@ -83,6 +84,9 @@ export class LiveFeedService {
       console.log('SENT TO SLACK');
       this.consumerErrCount.splice(errIndex, 1);
     }
+    this.consumerErrCount.splice(errIndex, 1);
+    //in case when operation is succesfull and offset is about to be commited in controller,
+    //so  need to remove from err count that offset
     return true;
   }
 
@@ -91,8 +95,7 @@ export class LiveFeedService {
     producer: Producer,
     topPartOff: TopicPartitionOffsetAndMetadata,
   ): Promise<boolean> {
-    // const session = await this.resolvedRepo.startSession();
-
+    let errIndex: number;
     const { queries, toResolveTickets } =
       await this.liveFeedQueries.insertResolvedQuery(resolvedData);
     const resolved = await this.transactionService.liveFeedTransaction(
@@ -106,7 +109,7 @@ export class LiveFeedService {
     //otherwise trigger for resolving payed tickets wont we executed bcs that message is already commited
     //e.g. toResolveTickets is sent to resolve_tickets topic
     if (resolved['errIndex']) {
-      const errIndex = resolved['errIndex'];
+      errIndex = resolved['errIndex'];
       if (
         this.consumerErrCount[errIndex]['count'] <= this.defaultConsumerRetries
       ) {
@@ -152,6 +155,7 @@ export class LiveFeedService {
         );
       }
     }
+    this.consumerErrCount.splice(errIndex, 1);
     //it will go to  cotnorller and commit only if all opeartions are successfull
     return true;
   }
@@ -160,6 +164,7 @@ export class LiveFeedService {
     resolvedDlq: any,
     topPartOff: TopicPartitionOffsetAndMetadata,
   ): Promise<boolean> {
+    let errIndex: number;
     const queries =
       await this.liveFeedQueries.insertDlqResolvedQuery(resolvedDlq);
     const dlqResolved = await this.transactionService.liveFeedTransaction(
@@ -169,15 +174,17 @@ export class LiveFeedService {
       topPartOff,
     );
     if (dlqResolved['errIndex']) {
-      const errIndex = dlqResolved['errIndex'];
+      errIndex = dlqResolved['errIndex'];
       if (
         this.consumerErrCount[errIndex]['count'] <= this.defaultConsumerRetries
       ) {
         console.log('IN ERROR CONSUMER', this.consumerErrCount[errIndex]);
         throw dlqResolved['error'];
       }
+      this.consumerErrCount.splice(errIndex, 1);
       return false; //in case when num of retries exceded limit, try all again until succeded
     }
+    this.consumerErrCount.splice(errIndex, 1);
     return true;
   }
 
