@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 @Injectable()
 export class LiveFeedQueries {
   public async insertFeedQueries(feed: any) {
-    const formatedData = feed.map((obj) => ({
+    const queries = feed.map((obj) => ({
       updateOne: {
         filter: {
           _id: obj.fixtureId,
@@ -42,12 +42,12 @@ export class LiveFeedQueries {
         // setDefaultsOnInsert: true,
       },
     }));
-    return formatedData;
+    return queries;
   }
 
   public async insertResolvedQuery(resolvedData: any) {
     const toResolveTickets = [];
-    const formatedData = resolvedData.map((obj) => ({
+    const queries = resolvedData.map((obj) => ({
       updateOne: {
         filter: {
           _id: obj.fixtureId,
@@ -71,11 +71,11 @@ export class LiveFeedQueries {
         upsert: true,
       },
     }));
-    return { formatedData, toResolveTickets };
+    return { queries, toResolveTickets };
   }
 
   public async insertDlqResolvedQuery(resolvedDlq: any) {
-    const formatedData = resolvedDlq.map((obj) => ({
+    const queries = resolvedDlq.map((obj) => ({
       updateOne: {
         filter: {
           _id: obj.fixtureId,
@@ -96,6 +96,6 @@ export class LiveFeedQueries {
         upsert: true,
       },
     }));
-    return formatedData;
+    return queries;
   }
 }

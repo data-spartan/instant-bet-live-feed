@@ -60,25 +60,29 @@ export class LiveFeedService {
     feed,
     topPartOff: TopicPartitionOffsetAndMetadata,
   ): Promise<boolean> {
-    // const session = await this.feedRepo.startSession();
-    const formatedData = await this.liveFeedQueries.insertFeedQueries(feed);
+    const queries = await this.liveFeedQueries.insertFeedQueries(feed);
     const insertFeed = await this.transactionService.liveFeedTransaction(
       this.feedRepo,
-      formatedData,
+      queries,
       this.consumerErrCount,
       topPartOff,
     );
 
     if (insertFeed['errIndex']) {
+      // there is no need to retry more than defined retries or sent to dlq bcs feed is comming every 10s
       const errIndex = insertFeed['errIndex'];
       if (
-        this.consumerErrCount[errIndex]['count'] <= this.defaultConsumerRetries
+        this.consumerErrCount[errIndex]['count'] <=
+        2 * this.defaultConsumerRetries
       ) {
         console.log('IN ERROR', errIndex);
         throw insertFeed['error'];
       }
+      //after threshold exceeded just clean consumerErrCount, bsc feed batch is comming every 10s
+      //and send to slack bcs maybe there are some serious problems that need to be investigated
+      console.log('SENT TO SLACK');
+      this.consumerErrCount.splice(errIndex, 1);
     }
-    // await consumer.commitOffsets([topPartOff]);
     return true;
   }
 
@@ -89,11 +93,11 @@ export class LiveFeedService {
   ): Promise<boolean> {
     // const session = await this.resolvedRepo.startSession();
 
-    const { formatedData, toResolveTickets } =
+    const { queries, toResolveTickets } =
       await this.liveFeedQueries.insertResolvedQuery(resolvedData);
     const resolved = await this.transactionService.liveFeedTransaction(
       this.resolvedRepo,
-      formatedData,
+      queries,
       this.consumerErrCount,
       topPartOff,
     );
@@ -118,9 +122,9 @@ export class LiveFeedService {
         this.producerErrCount,
         topPartOff,
         this.defaultProducerRetries,
-        'sent_dlq',
+        true,
       );
-      this.consumerErrCount.splice(errIndex, 1);
+      this.consumerErrCount.splice(errIndex, 1); //splice to trigger new cycle of retries
       console.log('CONSUMER ERR COUNT SPLICED');
 
       if (toSlack) {
@@ -135,7 +139,7 @@ export class LiveFeedService {
       if (toResolveTickets) {
         console.log('IN RESOLVE TIKCETS');
         //toResolveTickets doesnt need to be sent via dlq bcs non-sent resolved data is sent to 'dlq_resolved'
-        //from dlq_resolved topic and associated microservice we again try to write in database
+        //from dlq_resolved topic and associated microservice(we again extract toResolveTickets) and try to write in database
         await this.kafkaProducerService.kafkaProducer(
           toResolveTickets,
           'resolve_tickets',
@@ -144,11 +148,11 @@ export class LiveFeedService {
           this.producerErrCount,
           topPartOff,
           this.defaultProducerRetries,
+          false, //if producer have some error we dont need to retry indefinite until send is succesfull as i mentioned above why
         );
       }
     }
-    //commit only if all opeartions are successfull
-    // await consumer.commitOffsets([topPartOff]);
+    //it will go to  cotnorller and commit only if all opeartions are successfull
     return true;
   }
 
@@ -156,11 +160,11 @@ export class LiveFeedService {
     resolvedDlq: any,
     topPartOff: TopicPartitionOffsetAndMetadata,
   ): Promise<boolean> {
-    const formatedData =
+    const queries =
       await this.liveFeedQueries.insertDlqResolvedQuery(resolvedDlq);
     const dlqResolved = await this.transactionService.liveFeedTransaction(
       this.dlqResolvedRepo,
-      formatedData,
+      queries,
       this.consumerErrCount,
       topPartOff,
     );
@@ -174,7 +178,6 @@ export class LiveFeedService {
       }
       return false; //in case when num of retries exceded limit, try all again until succeded
     }
-    // await consumer.commitOffsets([topPartOff]);
     return true;
   }
 

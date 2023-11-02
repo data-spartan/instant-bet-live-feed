@@ -17,7 +17,7 @@ export class KafkaProducerService {
     producerErrCount: KafkaErrorCount[],
     topPartOff: TopicPartitionOffsetAndMetadata,
     defaultProducerRetries: number,
-    dlqTopic: string | void,
+    retryAgain: boolean,
   ): Promise<void | boolean | RpcException> {
     try {
       await producer.send({
@@ -42,7 +42,7 @@ export class KafkaProducerService {
       //if not it returns error to be thrown and cycle is repeated
       const value = await this.kafkaErrorHandler.producerErrorHandler(
         sentDlq,
-        dlqTopic,
+        retryAgain,
         producerErrCount,
         defaultProducerRetries,
       );

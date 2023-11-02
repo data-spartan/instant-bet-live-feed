@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
-import { KafkaErrorCount } from 'src/interfaces/kafkaError.interface';
+import {
+  KafkaErrorCount,
+  KafkaErrorObject,
+} from 'src/interfaces/kafkaError.interface';
 
 @Injectable()
 export class KafkaErrorHandler {
@@ -33,19 +36,19 @@ export class KafkaErrorHandler {
   }
 
   public async producerErrorHandler(
-    sent,
-    dlq,
-    producerErrCount,
-    defaultProducerRetries,
+    sentErrObj: KafkaErrorObject,
+    retryAgain: boolean,
+    producerErrCount: KafkaErrorCount[],
+    defaultProducerRetries: number,
   ): Promise<RpcException | boolean> {
-    if (dlq) {
-      if (sent['errIndex']) {
-        const errIndex = sent['errIndex'];
+    if (retryAgain) {
+      if (sentErrObj['errIndex']) {
+        const errIndex = sentErrObj['errIndex'];
         console.log(producerErrCount[errIndex], 'TEST TEST');
         if (producerErrCount[errIndex]['count'] <= defaultProducerRetries) {
           console.log('IN ERROR PRODUCER', producerErrCount[errIndex]);
           // throw sent['error'];
-          return sent['error'];
+          return sentErrObj['error'];
         } else {
           console.log('PROD ERR COUNT SPLICED');
           producerErrCount.splice(errIndex, 1);
@@ -54,7 +57,7 @@ export class KafkaErrorHandler {
         }
       }
     }
-    // for resolve toResolveTickets in liveFeedService, there is no need for retry
+    // for resolve toResolveTickets in liveFeedService, there is no need to retry
     return;
   }
 }
