@@ -11,6 +11,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { GlobalModule } from './global.module';
 import { AllExceptionsFilter } from './exception-filters/allExceptions.filter';
 import { CatchExceptionInterceptor } from './interceptors/kafkaConsumer.interceptor';
+import { MongooseConfigService } from './config/mongoose.config';
 
 @Module({
   imports: [
@@ -19,20 +20,8 @@ import { CatchExceptionInterceptor } from './interceptors/kafkaConsumer.intercep
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV}`,
     }),
-    MongooseModule.forRoot('mongodb://localhost/live-feed'),
+    MongooseModule.forRootAsync({ useClass: MongooseConfigService }),
     GlobalModule,
-    // ClientsModule.register([
-    //   {
-    //     name: 'LIVE_FEED',
-    //     transport: Transport.KAFKA,
-    //     options: {
-    //       client: {
-    //         brokers: ['localhost:9092', 'localhost:9093'],
-    //       },
-    //       producerOnlyMode: true,
-    //     },
-    //   },
-    // ]),
   ],
   controllers: [AppController],
   providers: [

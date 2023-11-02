@@ -16,7 +16,7 @@ import {
   LiveFeedResolved,
   LiveFeedResolvedSchema,
 } from 'src/database/mongodb/schemas/liveFeedResolved.schema';
-import { KafkaOptions } from 'src/interfaces/kafkaOptions.interfaces';
+import { KafkaOptions } from 'src/interfaces/kafkaOptions.interface';
 // import { CreateConsumer } from 'src/kafka/createConsumer';
 import { Kafka } from 'kafkajs';
 import { APP_FILTER } from '@nestjs/core';
@@ -25,13 +25,25 @@ import {
   DlqResolved,
   DlqResolvedSchema,
 } from 'src/database/mongodb/schemas/dlqResolved.schema';
+import { LiveFeedQueries } from 'src/database/mongodb/queries/liveFeedService.queries';
+import { KafkaErrorHandler } from 'src/kafka/kafkaErrorHandler.service';
+import { TransactionService } from 'src/database/mongodb/transactions_/liveFeed.transactions';
+import { KafkaProducerService } from 'src/kafka/producerKafka';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: LiveFeed.name, schema: LiveFeedSchema },
-      { name: LiveFeedResolved.name, schema: LiveFeedResolvedSchema },
-      { name: DlqResolved.name, schema: DlqResolvedSchema },
+      { name: LiveFeed.name, schema: LiveFeedSchema, collection: 'livefeed' },
+      {
+        name: LiveFeedResolved.name,
+        schema: LiveFeedResolvedSchema,
+        collection: 'livefeed.resolved',
+      },
+      {
+        name: DlqResolved.name,
+        schema: DlqResolvedSchema,
+        collection: 'dlq.resolved',
+      },
     ]),
     // ClientsModule.register([
     //   {
@@ -53,6 +65,10 @@ import {
   ],
   providers: [
     LiveFeedService,
+    LiveFeedQueries,
+    KafkaProducerService,
+    KafkaErrorHandler,
+    TransactionService,
     // {
     //   provide: APP_FILTER,
     //   useClass: KafkaExceptionFilter,

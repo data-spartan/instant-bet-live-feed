@@ -10,6 +10,7 @@ import { Consumer, Producer, TopicPartitionOffsetAndMetadata } from 'kafkajs';
 import { Model, MongooseError } from 'mongoose';
 import { type } from 'os';
 import { Exception } from 'sass';
+import { LiveFeedQueries } from 'src/database/mongodb/queries/liveFeedService.queries';
 import {
   DlqResolved,
   DlqResolvedDocument,
@@ -22,9 +23,11 @@ import {
   LiveFeedResolved,
   LiveFeedResolvedDocument,
 } from 'src/database/mongodb/schemas/liveFeedResolved.schema';
-import { liveFeedTransaction } from 'src/database/mongodb/transactions_/liveFeed.transactions';
+import { TransactionService } from 'src/database/mongodb/transactions_/liveFeed.transactions';
+// import { liveFeedTransaction } from 'src/database/mongodb/transactions_/liveFeed.transactions';
+import { KafkaErrorHandler } from 'src/kafka/kafkaErrorHandler.service';
 
-import { kafkaProducer } from 'src/kafka/producerKafka';
+import { KafkaProducerService } from 'src/kafka/producerKafka';
 
 @Injectable()
 export class LiveFeedService {
@@ -40,6 +43,9 @@ export class LiveFeedService {
     @InjectModel(DlqResolved.name)
     private readonly dlqResolvedRepo: Model<DlqResolvedDocument>,
     private readonly configService: ConfigService,
+    private readonly liveFeedQueries: LiveFeedQueries,
+    private readonly kafkaProducerService: KafkaProducerService,
+    private readonly transactionService: TransactionService,
   ) {
     this.defaultConsumerRetries = Number(
       this.configService.get('KAFKA_CONSUMER_DEFAULT_RETRIES'),
@@ -50,64 +56,37 @@ export class LiveFeedService {
     this.consumerErrCount = [];
     this.producerErrCount = [];
   }
-  public async insertFeed(feed, topPartOff: TopicPartitionOffsetAndMetadata) {
-    // const session = await this.feedRepo.startSession();
-    const updateArr = feed.map((obj) => ({
-      updateOne: {
-        filter: {
-          _id: obj.fixtureId,
-          updatedAt: { $lte: obj.sentTime },
-          //update only latest sent fixtures
-          // (can happen that producer send 2 exact fixtures to diff partitions), keep only latest
-          //or consumer crashed and and didnt commit offset so it pulls multiple messages(could me multiple fixtures with same id, but sent in diff time )
-        },
-
-        update: {
-          $setOnInsert: {
-            _id: obj.fixtureId,
-            source: obj.source,
-            type: obj.type,
-            competitionString: obj.competitionString,
-            region: obj.region,
-            regionId: obj.regionId,
-            sport: obj.sport,
-            sportId: obj.sportId,
-            competition: obj.competition,
-            competitionId: obj.competitionId,
-            fixtureTimestamp: obj.fixtureTimestamp,
-            competitor1Id: obj.competitor1Id,
-            competitor1: obj.competitor1,
-            competitor2Id: obj.competitor2Id,
-            competitor2: obj.competitor2,
-          },
-          $set: {
-            scoreboard: obj.scoreboard,
-            games: obj.games,
-            timeSent: obj.time,
-          },
-        },
-
-        upsert: true,
-        // setDefaultsOnInsert: true,
-      },
-    }));
-    const insertFeed = await liveFeedTransaction(
+  public async insertFeed(
+    feed,
+    topPartOff: TopicPartitionOffsetAndMetadata,
+  ): Promise<boolean> {
+    let errIndex: number;
+    const queries = await this.liveFeedQueries.insertFeedQueries(feed);
+    const insertFeed = await this.transactionService.liveFeedTransaction(
       this.feedRepo,
-      updateArr,
+      queries,
       this.consumerErrCount,
       topPartOff,
     );
 
     if (insertFeed['errIndex']) {
-      const errIndex = insertFeed['errIndex'];
+      // there is no need to retry more than defined retries or sent to dlq bcs feed is comming every 10s
+      errIndex = insertFeed['errIndex'];
       if (
-        this.consumerErrCount[errIndex]['count'] <= this.defaultConsumerRetries
+        this.consumerErrCount[errIndex]['count'] <=
+        2 * this.defaultConsumerRetries
       ) {
         console.log('IN ERROR', errIndex);
         throw insertFeed['error'];
       }
+      //after threshold exceeded just clean consumerErrCount, bsc feed batch is comming every 10s
+      //and send to slack bcs maybe there are some serious problems that need to be investigated
+      console.log('SENT TO SLACK');
+      this.consumerErrCount.splice(errIndex, 1);
     }
-    // await consumer.commitOffsets([topPartOff]);
+    this.consumerErrCount.splice(errIndex, 1);
+    //in case when operation is succesfull and offset is about to be commited in controller,
+    //so  need to remove from err count that offset
     return true;
   }
 
@@ -115,37 +94,13 @@ export class LiveFeedService {
     resolvedData: any,
     producer: Producer,
     topPartOff: TopicPartitionOffsetAndMetadata,
-  ) {
-    // const session = await this.resolvedRepo.startSession();
-    const toResolveTickets = [];
-    const updateArr = resolvedData.map((obj) => ({
-      updateOne: {
-        filter: {
-          _id: obj.fixtureId,
-        },
-        update: {
-          $setOnInsert: {
-            _id: obj.fixtureId,
-          },
-          $set: {
-            status:
-              obj.status !== 'Ended'
-                ? obj.status
-                : toResolveTickets.push(obj.fixtureId) && obj.status,
-          },
-          $push: {
-            resolved: {
-              $each: obj.resolved,
-            },
-          },
-        },
-        upsert: true,
-      },
-    }));
-
-    const resolved = await liveFeedTransaction(
+  ): Promise<boolean> {
+    let errIndex: number;
+    const { queries, toResolveTickets } =
+      await this.liveFeedQueries.insertResolvedQuery(resolvedData);
+    const resolved = await this.transactionService.liveFeedTransaction(
       this.resolvedRepo,
-      updateArr,
+      queries,
       this.consumerErrCount,
       topPartOff,
     );
@@ -154,7 +109,7 @@ export class LiveFeedService {
     //otherwise trigger for resolving payed tickets wont we executed bcs that message is already commited
     //e.g. toResolveTickets is sent to resolve_tickets topic
     if (resolved['errIndex']) {
-      const errIndex = resolved['errIndex'];
+      errIndex = resolved['errIndex'];
       if (
         this.consumerErrCount[errIndex]['count'] <= this.defaultConsumerRetries
       ) {
@@ -162,7 +117,7 @@ export class LiveFeedService {
         throw resolved['error'];
       }
       //TODO create separate mciroservice which will take care of dlq
-      const toSlack = await kafkaProducer(
+      const toSlack = await this.kafkaProducerService.kafkaProducer(
         resolvedData,
         'dlq_resolved',
         producer,
@@ -170,9 +125,9 @@ export class LiveFeedService {
         this.producerErrCount,
         topPartOff,
         this.defaultProducerRetries,
-        'sent_dlq',
+        true,
       );
-      this.consumerErrCount.splice(errIndex, 1);
+      this.consumerErrCount.splice(errIndex, 1); //splice to trigger new cycle of retries
       console.log('CONSUMER ERR COUNT SPLICED');
 
       if (toSlack) {
@@ -187,8 +142,8 @@ export class LiveFeedService {
       if (toResolveTickets) {
         console.log('IN RESOLVE TIKCETS');
         //toResolveTickets doesnt need to be sent via dlq bcs non-sent resolved data is sent to 'dlq_resolved'
-        //from dlq_resolved topic and associated microservice we again try to write in database
-        await kafkaProducer(
+        //from dlq_resolved topic and associated microservice(we again extract toResolveTickets) and try to write in database
+        await this.kafkaProducerService.kafkaProducer(
           toResolveTickets,
           'resolve_tickets',
           producer,
@@ -196,56 +151,40 @@ export class LiveFeedService {
           this.producerErrCount,
           topPartOff,
           this.defaultProducerRetries,
+          false, //if producer have some error we dont need to retry indefinite until send is succesfull as i mentioned above why
         );
       }
     }
-    //commit only if all opeartions are successfull
-    // await consumer.commitOffsets([topPartOff]);
+    this.consumerErrCount.splice(errIndex, 1);
+    //it will go to  cotnorller and commit only if all opeartions are successfull
     return true;
   }
 
   public async insertDlqResolved(
     resolvedDlq: any,
     topPartOff: TopicPartitionOffsetAndMetadata,
-  ) {
-    const updateArr = resolvedDlq.map((obj) => ({
-      updateOne: {
-        filter: {
-          _id: obj.fixtureId,
-        },
-        update: {
-          $setOnInsert: {
-            _id: obj.fixtureId,
-          },
-          $set: {
-            status: obj.status,
-          },
-          $push: {
-            resolved: {
-              $each: obj.resolved,
-            },
-          },
-        },
-        upsert: true,
-      },
-    }));
-    const dlqResolved = await liveFeedTransaction(
+  ): Promise<boolean> {
+    let errIndex: number;
+    const queries =
+      await this.liveFeedQueries.insertDlqResolvedQuery(resolvedDlq);
+    const dlqResolved = await this.transactionService.liveFeedTransaction(
       this.dlqResolvedRepo,
-      updateArr,
+      queries,
       this.consumerErrCount,
       topPartOff,
     );
     if (dlqResolved['errIndex']) {
-      const errIndex = dlqResolved['errIndex'];
+      errIndex = dlqResolved['errIndex'];
       if (
         this.consumerErrCount[errIndex]['count'] <= this.defaultConsumerRetries
       ) {
         console.log('IN ERROR CONSUMER', this.consumerErrCount[errIndex]);
         throw dlqResolved['error'];
       }
+      this.consumerErrCount.splice(errIndex, 1);
       return false; //in case when num of retries exceded limit, try all again until succeded
     }
-    // await consumer.commitOffsets([topPartOff]);
+    this.consumerErrCount.splice(errIndex, 1);
     return true;
   }
 
