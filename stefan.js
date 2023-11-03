@@ -45,8 +45,9 @@ if(ar){
     console.log('HERE')
 }
 
-const test=[ 23366726, 23363812, 23364606 ]
+const test=[ ]
 
 console.log(!(new RpcException() instanceof Error))
-
+const e= test.push(1)
+console.log(test.ha)
 

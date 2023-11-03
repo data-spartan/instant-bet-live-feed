@@ -11,9 +11,8 @@ export class KafkaErrorHandler {
     errCount: KafkaErrorCount[],
     pattern: string,
   ): Promise<number> {
-    let index;
-    let found;
-    console.log(errCount);
+    let index: number;
+    let found: boolean;
     if (errCount.length) {
       for (const [index_, item] of errCount.entries()) {
         if (item['pattern'] === pattern) {

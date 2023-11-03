@@ -18,7 +18,7 @@ export class MongooseConfigService implements MongooseOptionsFactory {
       )}`,
       dbName: `${this.configService.get('MONGODB_NAME')}${dbName}`,
 
-      retryAttempts: 10,
+      retryAttempts: 1,
       autoCreate: true,
       //   autoIndex: false,
       //   authSource: 'admin',

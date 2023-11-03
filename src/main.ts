@@ -6,7 +6,6 @@ import {
   InheritAppConfig,
   KafkaOptions,
 } from './interfaces/kafkaOptions.interface';
-import { KafkaExceptionFilter } from './exception-filters/kafkaException.filter';
 import { configKafka } from './config/kafkaServer.config';
 
 async function bootstrap() {
@@ -34,7 +33,7 @@ async function bootstrap() {
 
   await app.startAllMicroservices();
   const micro = app.getMicroservices();
-  // console.log(await micro[1]['server']);
+
   await app.listen(appPort);
 }
 

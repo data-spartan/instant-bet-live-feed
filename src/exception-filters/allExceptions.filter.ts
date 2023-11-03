@@ -1,13 +1,41 @@
-import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { KafkaRetriableException, ServerKafka } from '@nestjs/microservices';
 import {
-  KafkaJSNonRetriableError,
-  KafkaJSNumberOfRetriesExceeded,
-} from '@nestjs/microservices/external/kafka.interface';
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
+import { HttpAdapterHost } from '@nestjs/core';
+import { checkErrorType } from './helpers/checkErrorType.helper';
+import { GlobalResponseError } from './helpers/errorResponse.formatter';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  catch(exception: Error, host: ArgumentsHost) {
-    console.log(exception.message, 'DJOKA');
+  constructor(
+    private readonly httpAdapterHost: HttpAdapterHost, // private readonly logger: LoggerService,
+  ) {}
+
+  catch(exception: Error, host: ArgumentsHost): void {
+    // In certain situations `httpAdapter` might not be available in the
+    // constructor method, thus we should resolve it here.
+
+    const { httpAdapter } = this.httpAdapterHost;
+    const ctx = host.switchToHttp();
+
+    const path = httpAdapter.getRequestUrl(ctx.getRequest());
+    const method = httpAdapter.getRequestMethod(ctx.getRequest());
+
+    const { status, message, stack } = checkErrorType(exception);
+    const errRespBody = GlobalResponseError(
+      status,
+      message,
+      path,
+      method,
+      stack,
+    );
+
+    const response = ctx.getResponse();
+    response.locals.errResp = errRespBody;
+    httpAdapter.reply(response, errRespBody, status);
   }
 }

@@ -69,14 +69,13 @@ export class LiveFeedService {
       topPartOff,
     );
 
-    if (insertFeed['errIndex']) {
+    if (insertFeed['errIndex'] !== undefined) {
       // there is no need to retry more than defined retries or sent to dlq bcs feed is comming every 10s
       errIndex = insertFeed['errIndex'];
       if (
-        this.consumerErrCount[errIndex]['count'] <=
-        2 * this.defaultConsumerRetries
+        this.consumerErrCount[errIndex]['count'] <= this.defaultConsumerRetries
       ) {
-        console.log('IN ERROR', errIndex);
+        console.log('IN ERROR FEED', this.consumerErrCount[errIndex]);
         throw insertFeed['error'];
       }
       //after threshold exceeded just clean consumerErrCount, bsc feed batch is comming every 10s
@@ -108,12 +107,15 @@ export class LiveFeedService {
     //Regarding resolved data its cruccial not to commit messages until all operations are executed successfuly
     //otherwise trigger for resolving payed tickets wont we executed bcs that message is already commited
     //e.g. toResolveTickets is sent to resolve_tickets topic
-    if (resolved['errIndex']) {
+    if (resolved['errIndex'] !== undefined) {
       errIndex = resolved['errIndex'];
       if (
         this.consumerErrCount[errIndex]['count'] <= this.defaultConsumerRetries
       ) {
-        console.log('IN ERROR CONSUMER', this.consumerErrCount[errIndex]);
+        console.log(
+          'IN ERROR CONSUMER RESOLVED',
+          this.consumerErrCount[errIndex],
+        );
         throw resolved['error'];
       }
       //TODO create separate mciroservice which will take care of dlq
@@ -138,7 +140,7 @@ export class LiveFeedService {
         return false;
       }
     }
-    if (!resolved['errIndex']) {
+    if (resolved['errIndex'] === undefined) {
       if (toResolveTickets) {
         console.log('IN RESOLVE TIKCETS');
         //toResolveTickets doesnt need to be sent via dlq bcs non-sent resolved data is sent to 'dlq_resolved'
@@ -173,12 +175,15 @@ export class LiveFeedService {
       this.consumerErrCount,
       topPartOff,
     );
-    if (dlqResolved['errIndex']) {
+    if (dlqResolved['errIndex'] !== undefined) {
       errIndex = dlqResolved['errIndex'];
       if (
         this.consumerErrCount[errIndex]['count'] <= this.defaultConsumerRetries
       ) {
-        console.log('IN ERROR CONSUMER', this.consumerErrCount[errIndex]);
+        console.log(
+          'IN ERROR CONSUMER DLQ RESOLVED',
+          this.consumerErrCount[errIndex],
+        );
         throw dlqResolved['error'];
       }
       this.consumerErrCount.splice(errIndex, 1);
