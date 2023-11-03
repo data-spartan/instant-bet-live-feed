@@ -6,7 +6,7 @@ import { AppService } from './app.service';
 import { AppController } from './app.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
-import { KafkaExceptionFilter } from './exception-filters/kafkaException.filter';
+// import { RpcExcFilter } from './exception-filters/kafkaException.filter';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { GlobalModule } from './global.module';
 import { AllExceptionsFilter } from './exception-filters/allExceptions.filter';
@@ -26,14 +26,14 @@ import { MongooseConfigService } from './config/mongoose.config';
   controllers: [AppController],
   providers: [
     AppService,
-    {
-      provide: APP_FILTER,
-      useClass: AllExceptionsFilter,
-    },
-    {
-      provide: APP_FILTER,
-      useClass: KafkaExceptionFilter,
-    },
+    // {
+    //   provide: APP_FILTER,
+    //   useClass: AllExceptionsFilter,
+    // },
+    // {
+    //   provide: APP_FILTER,
+    //   useClass: KafkaExceptionFilter,
+    // },
     // {
     //   provide: APP_INTERCEPTOR,
     //   useClass: CatchExceptionInterceptor,

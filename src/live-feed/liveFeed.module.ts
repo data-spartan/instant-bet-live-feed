@@ -20,7 +20,6 @@ import { KafkaOptions } from 'src/interfaces/kafkaOptions.interface';
 // import { CreateConsumer } from 'src/kafka/createConsumer';
 import { Kafka } from 'kafkajs';
 import { APP_FILTER } from '@nestjs/core';
-import { KafkaExceptionFilter } from 'src/exception-filters/kafkaException.filter';
 import {
   DlqResolved,
   DlqResolvedSchema,

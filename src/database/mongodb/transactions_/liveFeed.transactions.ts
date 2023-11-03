@@ -26,7 +26,7 @@ export class TransactionService {
     data: Object[],
     consErrCount: KafkaErrorCount[],
     topPartOff: TopicPartitionOffsetAndMetadata,
-  ): Promise<boolean | Promise<KafkaErrorObject>> {
+  ): Promise<boolean | KafkaErrorObject> {
     const session = await repo.startSession();
     try {
       session.startTransaction();
@@ -42,7 +42,7 @@ export class TransactionService {
         consErrCount,
         pattern,
       );
-      console.log(consErrCount);
+      // console.log(consErrCount);
       return { error: new RpcException(`STEFAN CAR ${e}`), errIndex: index };
     } finally {
       await session.endSession();

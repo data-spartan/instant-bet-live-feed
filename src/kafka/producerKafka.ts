@@ -27,7 +27,7 @@ export class KafkaProducerService {
       });
       console.log('PRODUCER SENT');
     } catch (e) {
-      console.log('IN ERR');
+      console.log('IN ERROR PRODUCER');
       const pattern = joinObjProps(topPartOff);
       const index = await this.kafkaErrorHandler.errorCounter(
         producerErrCount,
