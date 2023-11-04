@@ -20,7 +20,7 @@ import {
 import { Consumer } from 'kafkajs';
 import { KafkaCtx } from 'src/decorators/kafkaContext.decorator';
 import { CustomKafkaContext } from 'src/interfaces/kafkaContext.interface';
-import { CatchExceptionInterceptor } from 'src/interceptors/kafkaConsumer.interceptor';
+import { KafkaLoggingInterceptor } from 'src/interceptors/kafkaConsumer.interceptor';
 import { Console } from 'console';
 import { ConfigService } from '@nestjs/config';
 import { joinObjProps } from 'src/utils/joinObjectProps.utils';
@@ -69,7 +69,6 @@ export class LiveFeedController {
       partition,
       offset,
     });
-
     if (resp) {
       consumer.commitOffsets([
         {

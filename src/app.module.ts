@@ -10,7 +10,6 @@ import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { GlobalModule } from './global.module';
 import { AllExceptionsFilter } from './exception-filters/allExceptions.filter';
-import { CatchExceptionInterceptor } from './interceptors/kafkaConsumer.interceptor';
 import { MongooseConfigService } from './config/mongoose.config';
 import { DirectoryCreationService } from './shared/dirCreation';
 
