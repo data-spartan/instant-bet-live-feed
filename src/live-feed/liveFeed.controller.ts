@@ -81,16 +81,16 @@ export class LiveFeedController {
     }
   }
 
-  // @EventPattern('resolve_tickets')
-  // async liveGames(
-  //   @Payload() data,
-  //   @KafkaCtx()
-  //   { kafkaCtx, offset, partition, topic, consumer }: CustomKafkaContext,
-  // ) {
-  //   console.log('IN RESOLVE TICKETS');
-  //   await consumer.commitOffsets([{ topic, partition, offset }]);
-  //   // this.liveFeedService.insertFeed(data);
-  // }
+  @EventPattern('resolve_tickets')
+  async liveGames(
+    @Payload() data,
+    @KafkaCtx()
+    { kafkaCtx, offset, partition, topic, consumer }: CustomKafkaContext,
+  ) {
+    console.log('IN RESOLVE TICKETS');
+    await consumer.commitOffsets([{ topic, partition, offset }]);
+    // this.liveFeedService.insertFeed(data);
+  }
 
   @EventPattern('dlq_resolved')
   async dlqResolved(

@@ -25,7 +25,7 @@ export class KafkaProducerService {
         messages: [{ value: JSON.stringify(data) }],
         acks: acks,
       });
-      console.log('PRODUCER SENT');
+      producer.logger().info('Message sent', { topic });
     } catch (e) {
       console.log('IN ERROR PRODUCER');
       const pattern = joinObjProps(topPartOff);
