@@ -1,5 +1,6 @@
 import { Transport } from '@nestjs/microservices';
-import { Partitioners } from 'kafkajs';
+import { Partitioners, logLevel } from 'kafkajs';
+import { WinstonLogCreator } from 'src/logger/logger.kafka';
 
 export const configKafka = (
   brokers: string,
@@ -11,6 +12,8 @@ export const configKafka = (
     client: {
       clientId: 'live-feed',
       brokers: brokers.split(','),
+      logLevel: logLevel.INFO,
+      logCreator: WinstonLogCreator,
     },
     consumer: {
       groupId: 'live-feed-consumer',

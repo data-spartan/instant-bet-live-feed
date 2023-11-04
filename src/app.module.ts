@@ -12,6 +12,7 @@ import { GlobalModule } from './global.module';
 import { AllExceptionsFilter } from './exception-filters/allExceptions.filter';
 import { CatchExceptionInterceptor } from './interceptors/kafkaConsumer.interceptor';
 import { MongooseConfigService } from './config/mongoose.config';
+import { DirectoryCreationService } from './shared/dirCreation';
 
 @Module({
   imports: [
@@ -25,11 +26,12 @@ import { MongooseConfigService } from './config/mongoose.config';
   ],
   controllers: [AppController],
   providers: [
+    DirectoryCreationService,
     AppService,
-    // {
-    //   provide: APP_FILTER,
-    //   useClass: AllExceptionsFilter,
-    // },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
     // {
     //   provide: APP_FILTER,
     //   useClass: KafkaExceptionFilter,

@@ -19,7 +19,6 @@ import {
 } from '@nestjs/microservices';
 import { Consumer } from 'kafkajs';
 import { KafkaCtx } from 'src/decorators/kafkaContext.decorator';
-import { KafkaExceptionFilter } from 'src/exception-filters/kafkaException.filter';
 import { CustomKafkaContext } from 'src/interfaces/kafkaContext.interface';
 import { CatchExceptionInterceptor } from 'src/interceptors/kafkaConsumer.interceptor';
 import { Console } from 'console';
