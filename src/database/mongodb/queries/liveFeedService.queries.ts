@@ -6,7 +6,7 @@ export class LiveFeedQueries {
     const queries = feed.map((obj) => ({
       updateOne: {
         filter: {
-          _d: obj.fixtureId,
+          _id: obj.fixtureId,
           updatedAt: { $lte: obj.sentTime },
           //update only latest sent fixtures
           // (can happen that producer send 2 exact fixtures to diff partitions), keep only latest

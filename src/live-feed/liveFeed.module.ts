@@ -19,7 +19,7 @@ import {
 import { KafkaOptions } from 'src/interfaces/kafkaOptions.interface';
 // import { CreateConsumer } from 'src/kafka/createConsumer';
 import { Kafka } from 'kafkajs';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import {
   DlqResolved,
   DlqResolvedSchema,
@@ -28,6 +28,7 @@ import { LiveFeedQueries } from 'src/database/mongodb/queries/liveFeedService.qu
 import { KafkaErrorHandler } from 'src/kafka/kafkaErrorHandler.service';
 import { TransactionService } from 'src/database/mongodb/transactions_/liveFeed.transactions';
 import { KafkaProducerService } from 'src/kafka/producerKafka';
+import { KafkaLoggingInterceptor } from 'src/interceptors/kafkaConsumer.interceptor';
 
 @Module({
   imports: [
@@ -68,10 +69,10 @@ import { KafkaProducerService } from 'src/kafka/producerKafka';
     KafkaProducerService,
     KafkaErrorHandler,
     TransactionService,
-    // {
-    //   provide: APP_FILTER,
-    //   useClass: KafkaExceptionFilter,
-    // },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: KafkaLoggingInterceptor,
+    },
   ],
   controllers: [LiveFeedController],
   // exports: [LiveFeedService],

@@ -43,7 +43,7 @@ export class TransactionService {
         pattern,
       );
       // console.log(consErrCount);
-      return { error: new RpcException(`STEFAN CAR ${e}`), errIndex: index };
+      return { error: new RpcException(e), errIndex: index };
     } finally {
       await session.endSession();
     }

@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common';
+import { Global, Logger, Module } from '@nestjs/common';
 import { LiveFeedModule } from './live-feed/liveFeed.module';
 import { ConfigModule } from '@nestjs/config';
 import { AppService } from './app.service';
@@ -10,7 +10,6 @@ import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { GlobalModule } from './global.module';
 import { AllExceptionsFilter } from './exception-filters/allExceptions.filter';
-import { CatchExceptionInterceptor } from './interceptors/kafkaConsumer.interceptor';
 import { MongooseConfigService } from './config/mongoose.config';
 import { DirectoryCreationService } from './shared/dirCreation';
 
@@ -26,6 +25,7 @@ import { DirectoryCreationService } from './shared/dirCreation';
   ],
   controllers: [AppController],
   providers: [
+    Logger,
     DirectoryCreationService,
     AppService,
     {
