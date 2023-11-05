@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common';
+import { Global, Logger, Module } from '@nestjs/common';
 import { LiveFeedModule } from './live-feed/liveFeed.module';
 import { ConfigModule } from '@nestjs/config';
 import { AppService } from './app.service';
@@ -25,6 +25,7 @@ import { DirectoryCreationService } from './shared/dirCreation';
   ],
   controllers: [AppController],
   providers: [
+    Logger,
     DirectoryCreationService,
     AppService,
     {
