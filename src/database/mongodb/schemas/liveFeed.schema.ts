@@ -44,16 +44,13 @@ export class LiveFeed {
   competitor1: string;
 
   @Prop({ required: true })
-  competitor1Id: number;
+  competitor1Id: string;
 
   @Prop({ required: true })
   competitor2: string;
 
   @Prop({ required: true })
-  competitor2Id: number;
-
-  @Prop({ required: true })
-  timeSent: number;
+  competitor2Id: string;
 
   @Prop({ type: Object })
   scoreboard: object;
@@ -64,6 +61,6 @@ export class LiveFeed {
 
 const LiveFeedSchema = SchemaFactory.createForClass(LiveFeed);
 LiveFeedSchema.index({ 'games.sourceGameId': 1 });
-LiveFeedSchema.index({ createdAt: 1 }, { expireAfterSeconds: 120 });
+// LiveFeedSchema.index({ createdAt: 1 }, { expireAfterSeconds: 120 });
 
 export { LiveFeedSchema };

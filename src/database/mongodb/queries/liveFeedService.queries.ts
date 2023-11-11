@@ -1,47 +1,48 @@
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class LiveFeedQueries {
+export class MongooseQueries {
   public async insertFeedQueries(feed: any) {
-    const queries = feed.map((obj) => ({
-      updateOne: {
-        filter: {
+    const queries = feed.map((obj) => {
+      const baseUpdate = {
+        $setOnInsert: {
           _id: obj.fixtureId,
-          updatedAt: { $lte: obj.sentTime },
-          //update only latest sent fixtures
-          // (can happen that producer send 2 exact fixtures to diff partitions), keep only latest
-          //or consumer crashed and and didnt commit offset so it pulls multiple messages(could me multiple fixtures with same id, but sent in diff time )
+          source: obj.source,
+          type: obj.type,
+          competitionString: obj.competitionString,
+          region: obj.region,
+          regionId: obj.regionId,
+          sport: obj.sport,
+          sportId: obj.sportId,
+          competition: obj.competition,
+          competitionId: obj.competitionId,
+          fixtureTimestamp: obj.fixtureTimestamp,
+          competitor1Id: obj.competitor1Id,
+          competitor1: obj.competitor1,
+          competitor2Id: obj.competitor2Id,
+          competitor2: obj.competitor2,
         },
+        $set: {
+          scoreboard: obj.scoreboard,
+        },
+      };
 
-        update: {
-          $setOnInsert: {
+      // Conditionally add "games" if obj.games is not empty
+      if (obj.games.length > 0) {
+        baseUpdate.$set['games'] = obj.games;
+      }
+      // console.log(obj.sentTime);
+      return {
+        updateOne: {
+          filter: {
             _id: obj.fixtureId,
-            source: obj.source,
-            type: obj.type,
-            competitionString: obj.competitionString,
-            region: obj.region,
-            regionId: obj.regionId,
-            sport: obj.sport,
-            sportId: obj.sportId,
-            competition: obj.competition,
-            competitionId: obj.competitionId,
-            fixtureTimestamp: obj.fixtureTimestamp,
-            competitor1Id: obj.competitor1Id,
-            competitor1: obj.competitor1,
-            competitor2Id: obj.competitor2Id,
-            competitor2: obj.competitor2,
+            updatedAt: { $lte: obj.sentTime },
           },
-          $set: {
-            scoreboard: obj.scoreboard,
-            games: obj.games,
-            timeSent: obj.time,
-          },
+          update: baseUpdate,
+          upsert: true,
         },
-
-        upsert: true,
-        // setDefaultsOnInsert: true,
-      },
-    }));
+      };
+    });
     return queries;
   }
 

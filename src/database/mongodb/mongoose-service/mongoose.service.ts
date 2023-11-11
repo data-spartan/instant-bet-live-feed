@@ -19,7 +19,7 @@ import { KafkaErrorHandler } from 'src/kafka/kafkaErrorHandler.service';
 
 import { joinObjProps } from 'src/utils/joinObjectProps.utils';
 @Injectable()
-export class TransactionService {
+export class MongooseService {
   constructor(private readonly kafkaErrorHanlder: KafkaErrorHandler) {}
   public async liveFeedTransaction(
     repo: any,
@@ -30,7 +30,7 @@ export class TransactionService {
     const session = await repo.startSession();
     try {
       session.startTransaction();
-      await repo.bulkWrite(data);
+      await repo.bulkWrite(data, { ordered: false });
       await session.commitTransaction();
       // await session.endSession();
       return true;
@@ -46,6 +46,20 @@ export class TransactionService {
       return { error: new RpcException(e), errIndex: index };
     } finally {
       await session.endSession();
+    }
+  }
+
+  public async bulkWrite(repo: any, data: Object[]) {
+    try {
+      await repo.bulkWrite(data, { ordered: false });
+    } catch (e) {
+      if (e.code === 11000) {
+        // Handle duplicate key error (e.g., update the existing document)
+        // await yourCollection.updateOne(query.updateOne.filter, query.updateOne.update);
+      } else {
+        // Handle other errors
+        console.error(e);
+      }
     }
   }
 }

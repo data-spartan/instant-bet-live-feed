@@ -49,5 +49,6 @@ const test=[ ]
 
 console.log(!(new RpcException() instanceof Error))
 const e= test.push(1)
-console.log(test.ha)
+
+const s= {s:2,null}
 

@@ -10,7 +10,8 @@ import { Consumer, Producer, TopicPartitionOffsetAndMetadata } from 'kafkajs';
 import { Model, MongooseError } from 'mongoose';
 import { type } from 'os';
 import { Exception } from 'sass';
-import { LiveFeedQueries } from 'src/database/mongodb/queries/liveFeedService.queries';
+import { MongooseService } from 'src/database/mongodb/mongoose-service/mongoose.service';
+import { MongooseQueries } from 'src/database/mongodb/queries/liveFeedService.queries';
 import {
   DlqResolved,
   DlqResolvedDocument,
@@ -23,7 +24,6 @@ import {
   LiveFeedResolved,
   LiveFeedResolvedDocument,
 } from 'src/database/mongodb/schemas/liveFeedResolved.schema';
-import { TransactionService } from 'src/database/mongodb/transactions_/liveFeed.transactions';
 // import { liveFeedTransaction } from 'src/database/mongodb/transactions_/liveFeed.transactions';
 import { KafkaErrorHandler } from 'src/kafka/kafkaErrorHandler.service';
 
@@ -43,9 +43,9 @@ export class LiveFeedService {
     @InjectModel(DlqResolved.name)
     private readonly dlqResolvedRepo: Model<DlqResolvedDocument>,
     private readonly configService: ConfigService,
-    private readonly liveFeedQueries: LiveFeedQueries,
+    private readonly liveFeedQueries: MongooseQueries,
     private readonly kafkaProducerService: KafkaProducerService,
-    private readonly transactionService: TransactionService,
+    private readonly mongooseService: MongooseService,
   ) {
     this.defaultConsumerRetries = Number(
       this.configService.get('KAFKA_CONSUMER_DEFAULT_RETRIES'),
@@ -62,12 +62,14 @@ export class LiveFeedService {
   ): Promise<boolean> {
     let errIndex: number;
     const queries = await this.liveFeedQueries.insertFeedQueries(feed);
-    const insertFeed = await this.transactionService.liveFeedTransaction(
-      this.feedRepo,
-      queries,
-      this.consumerErrCount,
-      topPartOff,
-    );
+    const insertFeed = this.feedRepo.bulkWrite(queries, {
+      ordered: false,
+    }); //await this.transactionService.liveFeedTransaction(
+    //   this.feedRepo,
+    //   queries,
+    //   this.consumerErrCount,
+    //   topPartOff,
+    // );
 
     if (insertFeed['errIndex'] !== undefined) {
       // there is no need to retry more than defined retries or sent to dlq bcs feed is comming every 10s
@@ -97,7 +99,7 @@ export class LiveFeedService {
     let errIndex: number;
     const { queries, toResolveTickets } =
       await this.liveFeedQueries.insertResolvedQuery(resolvedData);
-    const resolved = await this.transactionService.liveFeedTransaction(
+    const resolved = await this.mongooseService.liveFeedTransaction(
       this.resolvedRepo,
       queries,
       this.consumerErrCount,
@@ -169,7 +171,7 @@ export class LiveFeedService {
     let errIndex: number;
     const queries =
       await this.liveFeedQueries.insertDlqResolvedQuery(resolvedDlq);
-    const dlqResolved = await this.transactionService.liveFeedTransaction(
+    const dlqResolved = await this.mongooseService.liveFeedTransaction(
       this.dlqResolvedRepo,
       queries,
       this.consumerErrCount,
