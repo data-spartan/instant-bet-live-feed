@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import {
   Client,
   ClientKafka,
@@ -24,11 +24,13 @@ import {
   DlqResolved,
   DlqResolvedSchema,
 } from 'src/database/mongodb/schemas/dlqResolved.schema';
-import { LiveFeedQueries } from 'src/database/mongodb/queries/liveFeedService.queries';
+import { MongooseQueries } from 'src/database/mongodb/queries/liveFeedService.queries';
 import { KafkaErrorHandler } from 'src/kafka/kafkaErrorHandler.service';
-import { TransactionService } from 'src/database/mongodb/transactions_/liveFeed.transactions';
 import { KafkaProducerService } from 'src/kafka/producerKafka';
 import { KafkaLoggingInterceptor } from 'src/interceptors/kafkaConsumer.interceptor';
+import { MongooseService } from 'src/database/mongodb/mongoose-service/mongoose.service';
+import { DatabaseModule } from 'src/database/database.module';
+import { KafkaApiModule } from 'src/kafka/kafkaApi.module';
 
 @Module({
   imports: [
@@ -45,6 +47,8 @@ import { KafkaLoggingInterceptor } from 'src/interceptors/kafkaConsumer.intercep
         collection: 'dlq.resolved',
       },
     ]),
+    DatabaseModule,
+    KafkaApiModule,
     // ClientsModule.register([
     //   {
     //     name: 'LIVE_FEED',
@@ -64,11 +68,12 @@ import { KafkaLoggingInterceptor } from 'src/interceptors/kafkaConsumer.intercep
     // ]),
   ],
   providers: [
+    Logger,
     LiveFeedService,
-    LiveFeedQueries,
-    KafkaProducerService,
-    KafkaErrorHandler,
-    TransactionService,
+    // MongooseQueries,
+    // KafkaProducerService,
+    // KafkaErrorHandler,
+    MongooseService,
     {
       provide: APP_INTERCEPTOR,
       useClass: KafkaLoggingInterceptor,
