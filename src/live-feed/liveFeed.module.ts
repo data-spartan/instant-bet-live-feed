@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import {
   Client,
   ClientKafka,
@@ -68,6 +68,7 @@ import { KafkaApiModule } from 'src/kafka/kafkaApi.module';
     // ]),
   ],
   providers: [
+    Logger,
     LiveFeedService,
     // MongooseQueries,
     // KafkaProducerService,

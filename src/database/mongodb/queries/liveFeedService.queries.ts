@@ -27,16 +27,15 @@ export class MongooseQueries {
         },
       };
 
-      // Conditionally add "games" if obj.games is not empty
+      // Conditionally add "games" if obj.games is not empty, we dont want to insert empty games
       if (obj.games.length > 0) {
         baseUpdate.$set['games'] = obj.games;
       }
-      // console.log(obj.sentTime);
       return {
         updateOne: {
           filter: {
             _id: obj.fixtureId,
-            updatedAt: { $lte: obj.sentTime },
+            updatedAt: { $gte: obj.sentTime },
           },
           update: baseUpdate,
           upsert: true,
@@ -63,7 +62,7 @@ export class MongooseQueries {
                 ? obj.status
                 : toResolveTickets.push(obj.fixtureId) && obj.status,
           },
-          $push: {
+          $addToSet: {
             resolved: {
               $each: obj.resolved,
             },

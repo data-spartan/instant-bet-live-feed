@@ -62,9 +62,13 @@ export class LiveFeedService {
   ): Promise<boolean> {
     let errIndex: number;
     const queries = await this.liveFeedQueries.insertFeedQueries(feed);
-    const insertFeed = this.feedRepo.bulkWrite(queries, {
-      ordered: false,
-    }); //await this.transactionService.liveFeedTransaction(
+    const insertFeed = await this.mongooseService.bulkWrite(
+      this.feedRepo,
+      queries,
+      this.consumerErrCount,
+      topPartOff,
+    );
+    //await this.transactionService.liveFeedTransaction(
     //   this.feedRepo,
     //   queries,
     //   this.consumerErrCount,

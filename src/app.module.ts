@@ -25,7 +25,7 @@ import { DirectoryCreationService } from './shared/dirCreation';
   ],
   controllers: [AppController],
   providers: [
-    Logger,
+    // Logger,
     DirectoryCreationService,
     AppService,
     {

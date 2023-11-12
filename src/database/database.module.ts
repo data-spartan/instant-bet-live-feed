@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { MongooseService } from './mongodb/mongoose-service/mongoose.service';
 import { MongooseQueries } from './mongodb/queries/liveFeedService.queries';
 import { KafkaErrorHandler } from 'src/kafka/kafkaErrorHandler.service';
@@ -8,6 +8,7 @@ import { KafkaApiModule } from 'src/kafka/kafkaApi.module';
 @Module({
   imports: [KafkaApiModule],
   providers: [
+    Logger,
     MongooseService,
     MongooseQueries,
     // KafkaProducerService,
