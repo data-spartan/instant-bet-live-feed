@@ -3,7 +3,9 @@ import { Injectable } from '@nestjs/common';
 @Injectable()
 export class MongooseQueries {
   public async insertFeedQueries(feed: any) {
+    const ids = [];
     const queries = feed.map((obj) => {
+      ids.push(obj.fixtureId);
       const baseUpdate = {
         $setOnInsert: {
           _id: obj.fixtureId,
@@ -42,7 +44,7 @@ export class MongooseQueries {
         },
       };
     });
-    return queries;
+    return { queries, ids };
   }
 
   public async insertResolvedQuery(resolvedData: any) {
@@ -63,6 +65,7 @@ export class MongooseQueries {
                 : toResolveTickets.push(obj.fixtureId) && obj.status,
           },
           $addToSet: {
+            //check if already exist that object
             resolved: {
               $each: obj.resolved,
             },
