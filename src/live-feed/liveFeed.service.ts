@@ -59,12 +59,12 @@ export class LiveFeedService {
   public async insertFeed(
     feed,
     topPartOff: TopicPartitionOffsetAndMetadata,
-  ): Promise<boolean> {
+  ): Promise<number[]> {
     let errIndex: number;
     const queries = await this.liveFeedQueries.insertFeedQueries(feed);
     const insertFeed = await this.mongooseService.bulkWrite(
       this.feedRepo,
-      queries,
+      queries.queries,
       this.consumerErrCount,
       topPartOff,
     );
@@ -92,7 +92,7 @@ export class LiveFeedService {
     this.consumerErrCount.splice(errIndex, 1);
     //in case when operation is succesfull and offset is about to be commited in controller,
     //so  need to remove from err count that offset
-    return true;
+    return queries.ids;
   }
 
   public async insertResolved(

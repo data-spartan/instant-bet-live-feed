@@ -10,6 +10,7 @@ const customFormat = format.printf(({ timestamp, level, stack, message }) => {
 // for development environment
 const devLogger = {
   format: format.combine(
+    format.label(),
     format.timestamp(),
     format.errors({ stack: true }),
     customFormat,
@@ -20,6 +21,7 @@ const devLogger = {
 // for production environment
 const prodLogger = {
   format: format.combine(
+    format.label(),
     format.timestamp(),
     format.errors({ stack: true }),
     format.json(),
