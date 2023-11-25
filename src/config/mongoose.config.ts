@@ -17,7 +17,8 @@ export class MongooseConfigService implements MongooseOptionsFactory {
         'MONGODB_PORT',
       )}`,
       dbName: `${this.configService.get('MONGODB_NAME')}${dbName}`,
-
+      user: this.configService.get('MONGO_USERNAME'),
+      pass: this.configService.get('MONGO_PASSWORD'),
       retryAttempts: 1,
       autoCreate: true,
       //   autoIndex: false,

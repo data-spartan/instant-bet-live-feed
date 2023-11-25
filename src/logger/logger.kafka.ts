@@ -48,7 +48,7 @@ export const WinstonLogCreator = (logLevel: logLevel) => {
   const logger = createLogger({
     level: toWinstonLogLevel(logLevel),
     transports: [
-      process.env.NODE_ENV === 'production' ? devLogger : prodLogger,
+      process.env.NODE_ENV !== 'production' ? devLogger : prodLogger,
     ],
   });
 

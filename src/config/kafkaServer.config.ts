@@ -35,7 +35,7 @@ export const configKafka = (
     producer: {
       createPartitioner: Partitioners.DefaultPartitioner,
       retry: { retries: retries, factor: 0, multiplier: 1 },
-      allowAutoTopicCreation: false,
+      allowAutoTopicCreation: true,
     },
   },
 });

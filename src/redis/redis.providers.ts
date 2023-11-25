@@ -12,7 +12,7 @@ export const redisProvider: Provider = {
   useFactory: (): RedisClient => {
     return new Redis({
       host: 'localhost',
-      port: 6379,
+      port: 6300,
       // db:2
     });
   },
