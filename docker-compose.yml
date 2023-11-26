@@ -2,12 +2,14 @@ version: '3.8'
 services:
   zookeeper-0:
     image: confluentinc/cp-zookeeper:latest
+    hostname: zookeeper-0
+    container_name: zookeeper-0
     environment:
       ZOOKEEPER_SERVER_ID: 0
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     volumes:
-      - /home/data_spartan/stefanProj/kafka/zk-0:/var/lib/zookeper/data
+      - zk-0:/var/lib/zookeeper
         # - zoo_1_data:/var/lib/zookeeper/
     ports:
       - 22181:2181
@@ -15,18 +17,22 @@ services:
 
   zookeeper-1:
     image: confluentinc/cp-zookeeper:latest
+    hostname: zookeeper-1
+    container_name: zookeeper-1
     environment:
       ZOOKEEPER_SERVER_ID: 1
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     volumes:
-      - /home/data_spartan/stefanProj/kafka/zk-1:/var/lib/zookeper/data
+      - zk-1:/var/lib/zookeeper
     ports:
       - 32181:2181
     restart: unless-stopped
 
   kafka-0:
     image: confluentinc/cp-kafka:latest
+    hostname: broker-0
+    container_name: broker-0
     depends_on:
       - zookeeper-0
       - zookeeper-1
@@ -37,17 +43,28 @@ services:
     environment:
       KAFKA_BROKER_ID: 0
       KAFKA_ZOOKEEPER_CONNECT: zookeeper-0:2181,zookeeper-1:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-0:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-0:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_NUM_PARTITIONS: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 2
+      KAFKA_MIN_INSYNC_REPLICAS: 1
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_LOG_RETENTION_HOURS: 96
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_LOG_RETENTION_HOURS: 48
+      KAFKA_DELETE_TOPIC_ENABLE: 'true'
+      KAFKA_LEADER_IMBALANCE_CHECK_INTERVAL_SECONDS: 45
+
     volumes:
-      - /home/data_spartan/stefanProj/kafka/broker-0:/var/lib/kafka/data
+      - broker-0:/var/lib/kafka/data
         # - kafka-broker-1:/var/lib/kafka/data
 
   kafka-1:
     image: confluentinc/cp-kafka:latest
+    hostname: broker-1
+    container_name: broker-1
     depends_on:
       - zookeeper-0
       - zookeeper-1
@@ -57,13 +74,21 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper-0:2181,zookeeper-1:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:9092,PLAINTEXT_HOST://localhost:39092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-1:9092,PLAINTEXT_HOST://localhost:39092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_NUM_PARTITIONS: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 2
+      KAFKA_MIN_INSYNC_REPLICAS: 1
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_LOG_RETENTION_HOURS: 96
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_LOG_RETENTION_HOURS: 48
+      KAFKA_DELETE_TOPIC_ENABLE: 'true'
+      KAFKA_LEADER_IMBALANCE_CHECK_INTERVAL_SECONDS: 45
     volumes:
-      - /home/data_spartan/stefanProj/kafka/broker-1:/var/lib/kafka/data
+      - broker-1:/var/lib/kafka/data
 
   kafdrop-live-feed:
     container_name: 'live-feed-kafdrop'
@@ -72,12 +97,12 @@ services:
       - KAFKA_BROKERCONNECT=kafka-0:9092,kafka-1:9092
     ports:
       - 9999:9000
-    restart: unless-stopped
+    restart: never
     depends_on:
       - kafka-0
       - kafka-1
 
-  mongodb_container:
+  mongodb-live-feed:
     image: mongo:latest
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
@@ -89,13 +114,13 @@ services:
       - mongodb:/data/db
 
 volumes:
-  # zoo_1_data:
-  #   driver: local
-  # zoo_2_data:
-  #   driver: local
-  # kafka-broker-1:
-  #   driver: local
-  # kafka-broker-2:
-  #   driver: local
+  zk-0:
+    driver: local
+  zk-1:
+    driver: local
+  broker-0:
+    driver: local
+  broker-1:
+    driver: local
   mongodb:
     driver: local
