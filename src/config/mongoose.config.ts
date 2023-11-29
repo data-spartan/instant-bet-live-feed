@@ -12,6 +12,7 @@ export class MongooseConfigService implements MongooseOptionsFactory {
   constructor(private readonly configService: ConfigService) {}
   createMongooseOptions(): MongooseModuleOptions {
     const dbName = process.env.NODE_ENV !== 'test' ? '' : 'TEST';
+    console.log(this.configService.get('MONGODB_URL'));
     return {
       uri: `${this.configService.get('MONGODB_URL')}:${this.configService.get(
         'MONGODB_PORT',

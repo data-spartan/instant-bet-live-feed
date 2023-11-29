@@ -113,6 +113,30 @@ services:
     volumes:
       - mongodb:/data/db
 
+  live-feed-app:
+    container_name: live-feed
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    networks:
+      - live-feed-network
+      - instantbet-ws-scraper_redis-scraper-network
+
+    restart: unless-stopped
+    depends_on:
+      - kafka-0
+      - kafka-1
+      - mongodb-live-feed
+
+networks:
+  live-feed-network:
+    driver: bridge
+
+  instantbet-ws-scraper_redis-scraper-network:
+    external: true
+
 volumes:
   zk-0:
     driver: local
