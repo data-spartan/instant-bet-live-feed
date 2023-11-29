@@ -8,8 +8,6 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Consumer, Producer, TopicPartitionOffsetAndMetadata } from 'kafkajs';
 import { Model, MongooseError } from 'mongoose';
-import { type } from 'os';
-import { Exception } from 'sass';
 import { MongooseService } from 'src/database/mongodb/mongoose-service/mongoose.service';
 import { MongooseQueries } from 'src/database/mongodb/queries/liveFeedService.queries';
 import {
@@ -129,7 +127,6 @@ export class LiveFeedService {
         resolvedData,
         'dlq_resolved',
         producer,
-        -1,
         this.producerErrCount,
         topPartOff,
         this.defaultProducerRetries,
@@ -155,7 +152,6 @@ export class LiveFeedService {
           toResolveTickets,
           'resolve_tickets',
           producer,
-          -1,
           this.producerErrCount,
           topPartOff,
           this.defaultProducerRetries,

@@ -13,11 +13,11 @@ export class KafkaProducerService {
     data: string[] | Object,
     topic: string,
     producer: Producer,
-    acks: number,
     producerErrCount: KafkaErrorCount[],
     topPartOff: TopicPartitionOffsetAndMetadata,
     defaultProducerRetries: number,
     retryAgain: boolean,
+    acks: number = -1,
   ): Promise<void | boolean | RpcException> {
     try {
       await producer.send({
