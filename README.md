@@ -1,73 +1,68 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# InstantBet BE
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+This README is general overview of whole app including all related microservices.
+In near future all microservice projects will have their own specific README. 
+Right now instantbet-data-hub microservice contains general overview of whole BE App. 
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Microservices available at the momment:
+1. https://github.com/data-spartan/instantbet-ws-scraper
+2. https://github.com/data-spartan/instantbet-account
 
-## Description
+#### ABOUT:
+InstantBet is a nodejs backend app for a real-time sports betting(e.g BWIN), made with Nestjs.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### Features Overview:
 
-## Installation
+- Websockets enables real-time sports betting - **in progress**
+- Kafka enables scalable, failsafe and extremely fast data exchange between services
+- Dead letter queue(Kafka) for extremely sensitive failed data actions(payments, resolving markets ...) - **in progress**
+- Mongodb enables seamless and fast storage of nested JSON betting data such as macthes, markets and statistics.
+- RBAC based Authorization and Authentication with rotating refresh token, ES256 token signing algorithm with pub/priv keys and email verification using Postgres DB
+- Redis cache username, refresh tokens for Auth service - **in progress**
+- Placing bets and Payment service using Stripe and Postgres DB - **in progress**
+- Redis Pub/Sub enables notification to web-socket-live-feed of newly/updated arrived live betting data and emitting to all subscribed clients - **in progress**
+- Notification service consisting of phone and email notifications using Twilio and Nodemailer respectively - **in progress**
+- Slack integration for error notifications - **in progress**
 
-```bash
-$ npm install
-```
+### Architecture diagram:
 
-## Running the app
 
-```bash
-# development
-$ npm run start
+## Installation:
+Steps and commands will variate between microservices.This is only general overview.
 
-# watch mode
-$ npm run start:dev
+### Step 1
 
-# production mode
-$ npm run start:prod
-```
+Clone the repository from GitHub(): https://github.com/data-spartan/instantbet-data-hub
+You will need node v18.18.0, npm, @nestjs/cli, docker and docker-compose installed on your machine.
 
-## Test
+All commands should be run inside of the container which can be accessed by running ./bin/container from the root
 
-```bash
-# unit tests
-$ npm run test
+### Step 2
 
-# e2e tests
-$ npm run test:e2e
+When inside the container, run the following npm commands:
 
-# test coverage
-$ npm run test:cov
-```
+to create a database
 
-## Support
+`$ npm db:create`
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+run migrations:
 
-## Stay in touch
+`$ npm db:migrate`
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+run seeders:
 
-## License
+`$ npm db:seed`
 
-Nest is [MIT licensed](LICENSE).
+### Step 3
+
+The web app should be available at localhost:3000
+
+## Testing
+- **in progress**
+
+## Deployment
+- **in progress**
+
+## Naming conventions
+
+Branches should be named as following: feature/IB-DH-14-implements-readme, in this example IB-DH stands for InstantBet(app name) and DH is DataHub(service name), 14 is the number of the ticket on Trello and after that is a short description. Commit messages should this format: feat/[IB-DH-14] Implements README.md file.

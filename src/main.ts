@@ -11,7 +11,6 @@ import { WinstonLogCreator } from './logger/logger.kafka';
 import { WinstonModule, WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { instance } from './logger/logger.app';
 import { Logger } from 'winston';
-import { Console } from 'console';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -22,6 +21,7 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService); //to use configService in main.ts need to first import ConfigModule in AppModule
   const appPort = Number(configService.get('APP_PORT'));
+  const appName: string = configService.get('APP_NAME')
 
   const KAFKA_BROKERS = configService.get('KAFKA_BROKERS');
   const KAFKA_TOPICS = configService.get('KAFKA_TOPICS');
@@ -41,7 +41,7 @@ async function bootstrap() {
   }
   await app.startAllMicroservices();
   await app.listen(appPort, () => {
-    instance.info(`App is listening on port: ${appPort}`);
+    instance.info(`${appName} is listening on port: ${appPort}`);
   });
 }
 
