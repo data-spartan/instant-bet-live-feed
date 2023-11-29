@@ -1,16 +1,16 @@
-# InstantBet BE
+# instantbet-BE
 
 This README is general overview of whole app including all related microservices.
-In near future all microservice projects will have their own specific README. 
-Right now instantbet-data-hub microservice contains general overview of whole BE App. 
+instantbet-BE contains general overview of whole BE App. 
 
-Microservices available at the momment:
-1. https://github.com/data-spartan/instantbet-ws-scraper
+Available microservices:
+1. https://github.com/data-spartan/instantbet-scraper
 2. https://github.com/data-spartan/instantbet-account
-3. https://github.com/data-spartan/instantbet-data-hub
+3. https://github.com/data-spartan/instantbet-BE
 
 #### ABOUT:
 InstantBet is a nodejs backend app for a real-time sports betting(e.g BWIN), made with Nestjs.
+- instantbet-BE microservice is real-time sports betting data feed hub which is responsible for processing and storing matches, markets, statistics and routing to appropriate microservices.
 
 ### Features Overview:
 
@@ -29,11 +29,11 @@ InstantBet is a nodejs backend app for a real-time sports betting(e.g BWIN), mad
 
 
 ## Installation:
-Steps and commands will variate between microservices.This is only general overview.
+Steps and commands will variate between microservices. This is only general overview.
 
 ### Step 1
 
-Clone the repository from GitHub(): https://github.com/data-spartan/instantbet-data-hub
+Clone the repository from GitHub(): https://github.com/data-spartan/instantbet-BE
 You will need node v18.18.0, npm, @nestjs/cli, docker and docker-compose installed on your machine.
 
 All commands should be run inside of the container which can be accessed by running ./bin/container from the root
@@ -66,4 +66,4 @@ The web app should be available at localhost:3000
 
 ## Naming conventions
 
-Branches should be named as following: feature/IB-DH-14-implements-readme, in this example IB-DH stands for InstantBet(app name) and DH is DataHub(service name), 14 is the number of the ticket on Trello and after that is a short description. Commit messages should this format: feat/[IB-DH-14] Implements README.md file.
+Branches should be named as following: feature/IB-BE-14-implements-readme, in this example IB-BE stands for InstantBet(app name) and BE is core service name, 14 is the number of the ticket on Trello and after that is a short description. Commit messages should this format: feat/[IB-BE-14] Implements README.md file.
