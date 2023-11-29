@@ -7,6 +7,7 @@ Right now instantbet-data-hub microservice contains general overview of whole BE
 Microservices available at the momment:
 1. https://github.com/data-spartan/instantbet-ws-scraper
 2. https://github.com/data-spartan/instantbet-account
+3. https://github.com/data-spartan/instantbet-data-hub
 
 #### ABOUT:
 InstantBet is a nodejs backend app for a real-time sports betting(e.g BWIN), made with Nestjs.
