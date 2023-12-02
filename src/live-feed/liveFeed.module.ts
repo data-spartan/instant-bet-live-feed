@@ -32,20 +32,25 @@ import { MongooseService } from 'src/database/mongodb/mongoose-service/mongoose.
 import { DatabaseModule } from 'src/database/database.module';
 import { KafkaApiModule } from 'src/kafka/kafkaApi.module';
 import { RedisModule } from 'src/redis/redis.module';
+import { MongodbCollectionsEnum } from 'src/database/mongodb/mongodbConfig.enum';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: LiveFeed.name, schema: LiveFeedSchema, collection: 'livefeed' },
+      {
+        name: LiveFeed.name,
+        schema: LiveFeedSchema,
+        collection: MongodbCollectionsEnum.LIVE_FEED,
+      },
       {
         name: LiveFeedResolved.name,
         schema: LiveFeedResolvedSchema,
-        collection: 'livefeed.resolved',
+        collection: MongodbCollectionsEnum.LIVE_FEED_RESOLVED,
       },
       {
         name: DlqResolved.name,
         schema: DlqResolvedSchema,
-        collection: 'dlq.resolved',
+        collection: MongodbCollectionsEnum.LIVE_FEED_DLQ_RESOLVED,
       },
     ]),
     DatabaseModule,
