@@ -27,19 +27,22 @@ import { joinObjProps } from 'src/utils/joinObjectProps.utils';
 import { LiveFeedDocument } from 'src/database/mongodb/schemas/liveFeed.schema';
 import { RedisService } from 'src/redis/redis.service';
 import { EVENT_NEW_FIXTURES } from 'src/redis/redis.constants';
+import { LiveFeedTopicPatterns } from 'src/kafka/topic-patterns/liveFeed.patterns';
+import { LiveFeedType } from 'src/types/liveFeed.type';
 
 @Controller('feed')
 export class LiveFeedController {
   constructor(
     private readonly liveFeedService: LiveFeedService,
-    @Inject('LIVE_FEED') private readonly clientKafka: ClientKafka,
+    // @Inject('LIVE_FEED') private readonly clientKafka: ClientKafka,
+    //inject if prefer this clientaKafka approach,
     private readonly redisService: RedisService,
   ) {}
 
   // @UseInterceptors(CatchExceptionInterceptor)
-  @EventPattern('live_feed')
+  @EventPattern(LiveFeedTopicPatterns.LiveFeed)
   async liveData(
-    @Payload() data: any,
+    @Payload() data: LiveFeedType,
     @KafkaCtx()
     { offset, partition, topic, consumer }: CustomKafkaContext,
   ) {
@@ -65,7 +68,7 @@ export class LiveFeedController {
     });
   }
 
-  @EventPattern('live_resolved')
+  @EventPattern(LiveFeedTopicPatterns.LiveResolved)
   async liveResolved(
     @Payload() data,
     @KafkaCtx()
@@ -88,7 +91,7 @@ export class LiveFeedController {
     }
   }
 
-  @EventPattern('resolve_tickets')
+  @EventPattern(LiveFeedTopicPatterns.ResolveTickets)
   async liveGames(
     @Payload() data,
     @KafkaCtx()
@@ -99,7 +102,7 @@ export class LiveFeedController {
     // this.liveFeedService.insertFeed(data);
   }
 
-  @EventPattern('dlq_resolved')
+  @EventPattern(LiveFeedTopicPatterns.DlqResolved)
   async dlqResolved(
     @Payload() data,
     @KafkaCtx()

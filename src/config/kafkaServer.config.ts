@@ -1,5 +1,9 @@
 import { Transport } from '@nestjs/microservices';
 import { Partitioners, logLevel } from 'kafkajs';
+import {
+  KAFKA_CLIENT_ID,
+  KAFKA_LIVE_FEED_CONSUMER_GROUP,
+} from 'src/kafka/config.constants';
 import { WinstonLogCreator } from 'src/logger/logger.kafka';
 
 export const configKafka = (
@@ -10,13 +14,13 @@ export const configKafka = (
   transport: Transport.KAFKA,
   options: {
     client: {
-      clientId: 'live-feed',
+      clientId: KAFKA_CLIENT_ID,
       brokers: brokers.split(','),
       logLevel: logLevel.INFO,
       logCreator: WinstonLogCreator,
     },
     consumer: {
-      groupId: 'live-feed-consumer',
+      groupId: KAFKA_LIVE_FEED_CONSUMER_GROUP,
       heartbeatInterval: 2500,
       sessionTimeout: 15000,
       retry: { retries: retries, factor: 0, multiplier: 1 }, //after n retries consumer is restarted and reading is tried again
