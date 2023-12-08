@@ -29,6 +29,10 @@ import { RedisService } from 'src/redis/redis.service';
 import { EVENT_NEW_FIXTURES } from 'src/redis/redis.constants';
 import { LiveFeedTopicPatterns } from 'src/kafka/topic-patterns/liveFeed.patterns';
 import { LiveFeedType } from 'src/types/liveFeed.type';
+import {
+  LiveResolvedType,
+  ResolvedArrayType,
+} from 'src/types/liveResolved.type';
 
 @Controller('feed')
 export class LiveFeedController {
@@ -45,7 +49,7 @@ export class LiveFeedController {
     @Payload() data: LiveFeedType,
     @KafkaCtx()
     { offset, partition, topic, consumer }: CustomKafkaContext,
-  ) {
+  ): Promise<void> {
     const idsToSend = await this.liveFeedService.insertFeed(data, {
       topic,
       partition,
@@ -70,10 +74,10 @@ export class LiveFeedController {
 
   @EventPattern(LiveFeedTopicPatterns.LiveResolved)
   async liveResolved(
-    @Payload() data,
+    @Payload() data: ResolvedArrayType,
     @KafkaCtx()
     { offset, partition, topic, consumer, producer }: CustomKafkaContext,
-  ) {
+  ): Promise<void> {
     const resp = await this.liveFeedService.insertResolved(data, producer, {
       topic,
       partition,
@@ -96,10 +100,10 @@ export class LiveFeedController {
     @Payload() data,
     @KafkaCtx()
     { kafkaCtx, offset, partition, topic, consumer }: CustomKafkaContext,
-  ) {
+  ): Promise<void> {
     console.log('IN RESOLVE TICKETS');
     await consumer.commitOffsets([{ topic, partition, offset }]);
-    // this.liveFeedService.insertFeed(data);
+    //TODO Move everthing related to tickets resolving to separate microservice(betting-engine)
   }
 
   @EventPattern(LiveFeedTopicPatterns.DlqResolved)
@@ -124,6 +128,7 @@ export class LiveFeedController {
         },
       ]);
       console.log('COMITTED DLQ RESOLVED');
+      //TODO Move everthing related to tickets resolving to separate microservice(betting-engine)
     }
   }
 }

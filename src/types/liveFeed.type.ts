@@ -7,7 +7,7 @@ export type GamesType = {
 };
 
 export type FixtureType = {
-  _id: number;
+  fixtureId: number;
   source: string;
   type: string;
   competitionString: string;
@@ -24,8 +24,7 @@ export type FixtureType = {
   competitor2Id: string;
   scoreboard?: object;
   games?: GamesType[];
-  createdAt?: Date;
-  updatedAt?: Date;
+  sentTime: Date;
 };
 
 export type LiveFeedType = FixtureType[];
