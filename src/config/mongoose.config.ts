@@ -34,8 +34,8 @@ export class MongooseConfigService implements MongooseOptionsFactory {
         autoCreate: true,
         //   autoIndex: false,
         //   authSource: 'admin',
-        //   replicaSet: this.configService.get('MONGO_REPL_SET'),
-        //   authSource:  this.configService.get('MONGO_AUTH_SOURCE'),
+        //   replicaSet: this.configService.get('MONGODB_REPL_SET'),
+        //   authSource:  this.configService.get('MONGODB_AUTH_SOURCE'),
       };
     } catch (error) {
       throw new Error(`Mongoose Config Error: ${error.message}`);

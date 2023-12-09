@@ -28,7 +28,6 @@ export class RedisService {
           if (error) {
             return reject(error);
           }
-          console.log('IN REDIS PUBLISH', channel, value);
           return resolve(reply);
         },
       );

@@ -1,4 +1,12 @@
 version: '3.8'
+networks:
+  live-feed-network:
+    driver: bridge
+
+  #join pre-existing network
+  instantbet-scraper_redis-scraper-network:
+    external: true
+
 services:
   zookeeper-0:
     image: confluentinc/cp-zookeeper:latest
@@ -12,7 +20,9 @@ services:
       - zk-0:/var/lib/zookeeper
         # - zoo_1_data:/var/lib/zookeeper/
     ports:
-      - 22181:2181
+      - ${ZOOKEEPER_0_PORT}:2181
+    networks:
+      - live-feed-network
     restart: unless-stopped
 
   zookeeper-1:
@@ -26,7 +36,9 @@ services:
     volumes:
       - zk-1:/var/lib/zookeeper
     ports:
-      - 32181:2181
+      - ${ZOOKEEPER_1_PORT}:2181
+    networks:
+      - live-feed-network
     restart: unless-stopped
 
   kafka-0:
@@ -38,7 +50,9 @@ services:
       - zookeeper-1
 
     ports:
-      - 29092:29092
+      - ${KAFKA_BROKER_0_PORT}:29092
+    networks:
+      - live-feed-network
     restart: unless-stopped
     environment:
       KAFKA_BROKER_ID: 0
@@ -69,12 +83,14 @@ services:
       - zookeeper-0
       - zookeeper-1
     ports:
-      - 39092:39092
+      - ${KAFKA_BROKER_1_PORT}:39092
+    networks:
+      - live-feed-network
     restart: unless-stopped
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper-0:2181,zookeeper-1:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-1:9092,PLAINTEXT_HOST://localhost:39092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-1:9093,PLAINTEXT_HOST://localhost:39092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_NUM_PARTITIONS: 2
@@ -96,19 +112,25 @@ services:
     environment:
       - KAFKA_BROKERCONNECT=kafka-0:9092,kafka-1:9092
     ports:
-      - 9999:9000
-    restart: never
+      - ${KAFDROP_PORT}:9000
+    networks:
+      - live-feed-network
+    #try n times before exiting
+    restart: on-failure:10
     depends_on:
       - kafka-0
       - kafka-1
 
   mongodb-live-feed:
     image: mongo:latest
+    container_name: mongodb-live-feed
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
     ports:
-      - 27018:27017
+      - ${MONGODB_PORT}:${MONGODB_PORT}
+    networks:
+      - live-feed-network
     restart: unless-stopped
     volumes:
       - mongodb:/data/db
@@ -122,20 +144,14 @@ services:
       - ${APP_PORT}:${APP_PORT}
     networks:
       - live-feed-network
-      - instantbet-ws-scraper_redis-scraper-network
-
+      - instantbet-scraper_redis-scraper-network
+    volumes:
+      - live-feed-app:/usr/src/logs
     restart: unless-stopped
     depends_on:
       - kafka-0
       - kafka-1
       - mongodb-live-feed
-
-networks:
-  live-feed-network:
-    driver: bridge
-
-  instantbet-ws-scraper_redis-scraper-network:
-    external: true
 
 volumes:
   zk-0:
@@ -147,4 +163,6 @@ volumes:
   broker-1:
     driver: local
   mongodb:
+    driver: local
+  live-feed-app:
     driver: local

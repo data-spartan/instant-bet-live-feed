@@ -64,7 +64,7 @@ export class LiveFeedController {
           offset,
         },
       ]);
-      console.log('COMITTED FEED');
+      // console.log('COMITTED FEED');
     }
     this.redisService.publish(EVENT_NEW_FIXTURES, {
       event: 'games',
@@ -91,7 +91,7 @@ export class LiveFeedController {
           offset,
         },
       ]);
-      console.log('COMITTED RESOLVED');
+      // console.log('COMITTED RESOLVED');
     }
   }
 
@@ -101,7 +101,6 @@ export class LiveFeedController {
     @KafkaCtx()
     { kafkaCtx, offset, partition, topic, consumer }: CustomKafkaContext,
   ): Promise<void> {
-    console.log('IN RESOLVE TICKETS');
     await consumer.commitOffsets([{ topic, partition, offset }]);
     //TODO Move everthing related to tickets resolving to separate microservice(betting-engine)
   }
@@ -112,7 +111,6 @@ export class LiveFeedController {
     @KafkaCtx()
     { offset, partition, topic, consumer }: CustomKafkaContext,
   ) {
-    console.log('IN DLQ_RESOLVED');
     const resp = await this.liveFeedService.insertDlqResolved(data, {
       topic,
       partition,
@@ -127,7 +125,7 @@ export class LiveFeedController {
           offset,
         },
       ]);
-      console.log('COMITTED DLQ RESOLVED');
+      // console.log('COMITTED DLQ RESOLVED');
       //TODO Move everthing related to tickets resolving to separate microservice(betting-engine)
     }
   }

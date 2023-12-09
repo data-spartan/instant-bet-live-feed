@@ -3,10 +3,13 @@ FROM node:18.18.0-alpine As development
 
 ENV NODE_ENV development
 # Create app directory
-WORKDIR /usr/src/app
+WORKDIR /usr/src
 
 #in case error: EACCES: permission denied mkdir
-RUN chown -R node:node /usr/src/app
+RUN chown -R node:node /usr/src/
+
+RUN mkdir -p usr/src/logs && chown -R node:node usr/src/logs
+
 
 COPY --chown=node:node package*.json ./
 
