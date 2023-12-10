@@ -1,7 +1,8 @@
 # Base image
-FROM node:18.18.0-alpine As development
+FROM node:18.18.0-alpine
 
-ENV NODE_ENV development
+ARG ENV
+ENV NODE_ENV ${ENV}
 # Create app directory
 WORKDIR /usr/src
 

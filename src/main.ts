@@ -18,10 +18,9 @@ async function bootstrap() {
       instance: instance,
     }),
   }); //to use global logger in other services need to put nestjscommon Logger as provider in each module you want to use logger
-
   const configService = app.get(ConfigService); //to use configService in main.ts need to first import ConfigModule in AppModule
   const appPort = Number(configService.get('APP_PORT'));
-  const appName: string = configService.get('APP_NAME')
+  const appName: string = configService.get('APP_NAME');
 
   const KAFKA_BROKERS = configService.get('KAFKA_BROKERS');
   const KAFKA_TOPICS = configService.get('KAFKA_TOPICS');
