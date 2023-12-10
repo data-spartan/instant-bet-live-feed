@@ -15,12 +15,20 @@ services:
     environment:
       ZOOKEEPER_SERVER_ID: 0
       ZOOKEEPER_CLIENT_PORT: 2181
+      # ZOOKEEPER_PEER_PORT: 2888
+      # ZOOKEEPER_LEADER_PORT: 3888
       ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_DATA_DIR: /var/lib/zookeeper/data
+      LOG_DIR: /var/lib/zookeeper/log
+      # ZOOKEEPER_SERVERS: 'zookeeper-0:2888:3888;zookeeper-1:2889:3889'
     volumes:
-      - zk-0:/var/lib/zookeeper
-        # - zoo_1_data:/var/lib/zookeeper/
+      - zk-0-data:/var/lib/zookeeper/data
+      - zk-0-log:/var/lib/zookeeper/log
+
     ports:
       - ${ZOOKEEPER_0_PORT}:2181
+      # - 2888:2888
+      # - 3888:3888
     networks:
       - live-feed-network
     restart: unless-stopped
@@ -32,11 +40,19 @@ services:
     environment:
       ZOOKEEPER_SERVER_ID: 1
       ZOOKEEPER_CLIENT_PORT: 2181
+      # ZOOKEEPER_PEER_PORT: 2888
+      # ZOOKEEPER_LEADER_PORT: 3888
       ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_DATA_DIR: /var/lib/zookeeper
+      LOG_DIR: /var/lib/zookeeper/log
+      # ZOOKEEPER_SERVERS: 'zookeeper-0:2888:3888;zookeeper-1:2889:3889'
     volumes:
-      - zk-1:/var/lib/zookeeper
+      - zk-1-data:/var/lib/zookeeper/data
+      - zk-1-log:/var/lib/zookeeper/log
     ports:
       - ${ZOOKEEPER_1_PORT}:2181
+      # - 2889:2888
+      # - 3889:3888
     networks:
       - live-feed-network
     restart: unless-stopped
@@ -70,9 +86,12 @@ services:
       KAFKA_LOG_RETENTION_HOURS: 48
       KAFKA_DELETE_TOPIC_ENABLE: 'true'
       KAFKA_LEADER_IMBALANCE_CHECK_INTERVAL_SECONDS: 45
+      LOG_DIR: /var/log/kafka
+      KAFKA_DATA_DIR: /var/lib/kafka
 
     volumes:
       - broker-0:/var/lib/kafka/data
+      - broker-0-log:/var/log/kafka
         # - kafka-broker-1:/var/lib/kafka/data
 
   kafka-1:
@@ -103,14 +122,18 @@ services:
       KAFKA_LOG_RETENTION_HOURS: 48
       KAFKA_DELETE_TOPIC_ENABLE: 'true'
       KAFKA_LEADER_IMBALANCE_CHECK_INTERVAL_SECONDS: 45
+      LOG_DIR: /var/log/kafka
+      KAFKA_DATA_DIR: /var/lib/kafka
+
     volumes:
       - broker-1:/var/lib/kafka/data
+      - broker-1-log:/var/log/kafka
 
   kafdrop-live-feed:
-    container_name: 'live-feed-kafdrop'
+    container_name: live-feed-kafdrop
     image: obsidiandynamics/kafdrop:latest
     environment:
-      - KAFKA_BROKERCONNECT=kafka-0:9092,kafka-1:9092
+      - KAFKA_BROKERCONNECT=kafka-0:9092,kafka-1:9093
     ports:
       - ${KAFDROP_PORT}:9000
     networks:
@@ -154,13 +177,21 @@ services:
       - mongodb-live-feed
 
 volumes:
-  zk-0:
+  zk-0-data:
     driver: local
-  zk-1:
+  zk-0-log:
+    driver: local
+  zk-1-data:
+    driver: local
+  zk-1-log:
     driver: local
   broker-0:
     driver: local
+  broker-0-log:
+    driver: local
   broker-1:
+    driver: local
+  broker-1-log:
     driver: local
   mongodb:
     driver: local

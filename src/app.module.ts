@@ -1,5 +1,4 @@
 import { Global, Logger, Module } from '@nestjs/common';
-import { LiveFeedModule } from './live-feed/liveFeed.module';
 import { ConfigModule } from '@nestjs/config';
 import { AppService } from './app.service';
 // import { LiveFeedController } from './live-feed/liveFeed.controller';
@@ -12,6 +11,7 @@ import { GlobalModule } from './global.module';
 import { AllExceptionsFilter } from './exception-filters/allExceptions.filter';
 import { MongooseConfigService } from './config/mongoose.config';
 import { DirectoryCreationService } from './shared/dirCreation';
+import { LiveFeedModule } from './api/live-feed/liveFeed.module';
 
 @Module({
   imports: [

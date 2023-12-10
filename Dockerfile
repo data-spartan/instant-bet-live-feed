@@ -6,10 +6,9 @@ ENV NODE_ENV development
 WORKDIR /usr/src
 
 #in case error: EACCES: permission denied mkdir
-RUN chown -R node:node /usr/src/
+RUN chown -R node:node /usr/src/ && mkdir -p usr/src/logs && chown -R node:node usr/src/logs
 
-RUN mkdir -p usr/src/logs && chown -R node:node usr/src/logs
-
+# RUN mkdir -p usr/src/logs && chown -R node:node usr/src/logs
 
 COPY --chown=node:node package*.json ./
 
