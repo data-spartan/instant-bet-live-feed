@@ -26,6 +26,8 @@ import {
 import { KafkaErrorHandler } from 'src/kafka/kafkaErrorHandler.service';
 
 import { KafkaProducerService } from 'src/kafka/producerKafka';
+import { LiveFeedType } from 'src/types/liveFeed.type';
+import { ResolvedArrayType } from 'src/types/liveResolved.type';
 
 @Injectable()
 export class LiveFeedService {
@@ -55,23 +57,17 @@ export class LiveFeedService {
     this.producerErrCount = [];
   }
   public async insertFeed(
-    feed,
+    feed: LiveFeedType,
     topPartOff: TopicPartitionOffsetAndMetadata,
   ): Promise<number[]> {
     let errIndex: number;
-    const queries = await this.liveFeedQueries.insertFeedQueries(feed);
+    const { queries, ids } = await this.liveFeedQueries.insertFeedQueries(feed);
     const insertFeed = await this.mongooseService.bulkWrite(
       this.feedRepo,
-      queries.queries,
+      queries,
       this.consumerErrCount,
       topPartOff,
     );
-    //await this.transactionService.liveFeedTransaction(
-    //   this.feedRepo,
-    //   queries,
-    //   this.consumerErrCount,
-    //   topPartOff,
-    // );
 
     if (insertFeed['errIndex'] !== undefined) {
       // there is no need to retry more than defined retries or sent to dlq bcs feed is comming every 10s
@@ -90,11 +86,11 @@ export class LiveFeedService {
     this.consumerErrCount.splice(errIndex, 1);
     //in case when operation is succesfull and offset is about to be commited in controller,
     //so  need to remove from err count that offset
-    return queries.ids;
+    return ids;
   }
 
   public async insertResolved(
-    resolvedData: any,
+    resolvedData: ResolvedArrayType,
     producer: Producer,
     topPartOff: TopicPartitionOffsetAndMetadata,
   ): Promise<boolean> {

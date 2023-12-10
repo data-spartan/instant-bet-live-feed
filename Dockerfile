@@ -1,12 +1,15 @@
 # Base image
-FROM node:18.18.0-alpine As development
+FROM node:18.18.0-alpine
 
-ENV NODE_ENV development
+ARG ENV
+ENV NODE_ENV ${ENV}
 # Create app directory
-WORKDIR /usr/src/app
+WORKDIR /usr/src
 
 #in case error: EACCES: permission denied mkdir
-RUN chown -R node:node /usr/src/app
+RUN chown -R node:node /usr/src/ && mkdir -p usr/src/logs && chown -R node:node usr/src/logs
+
+# RUN mkdir -p usr/src/logs && chown -R node:node usr/src/logs
 
 COPY --chown=node:node package*.json ./
 
