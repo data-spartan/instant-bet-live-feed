@@ -13,8 +13,8 @@
     "docker:stop": "docker-compose stop zookeeper-0 zookeeper-1 kafka-0 kafka-1",
     "docker:start": "docker-compose start zookeeper-0 zookeeper-1 kafka-0 kafka-1",
     "docker:down:specific": "docker-compose rm -s -v zookeeper-0 zookeeper-1 kafka-0 kafka-1",
-    "start:dev": "cross-env NODE_ENV=development TZ=UTC nest start --watch",
-    "start:debug": "cross-env NODE_ENV=development TZ=UTC nest start --watch",
+    "start:dev": "cross-env NODE_ENV=dev TZ=UTC nest start --watch",
+    "start:debug": "cross-env NODE_ENV=dev TZ=UTC nest start --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
@@ -24,6 +24,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@nestjs-modules/ioredis": "^2.0.2",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.1.1",
     "@nestjs/core": "^10.0.0",

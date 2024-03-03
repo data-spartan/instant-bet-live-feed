@@ -31,8 +31,8 @@ import { KafkaLoggingInterceptor } from 'src/interceptors/kafkaConsumer.intercep
 import { MongooseService } from 'src/database/mongodb/mongoose-service/mongoose.service';
 import { DatabaseModule } from 'src/database/database.module';
 import { KafkaApiModule } from 'src/kafka/kafkaApi.module';
-import { RedisModule } from 'src/redis/redis.module';
 import { MongodbCollectionsEnum } from 'src/database/mongodb/mongodbConfig.enum';
+import { RedisCacheModule } from 'src/redisCache/redisCache.module';
 
 @Module({
   imports: [
@@ -53,9 +53,9 @@ import { MongodbCollectionsEnum } from 'src/database/mongodb/mongodbConfig.enum'
         collection: MongodbCollectionsEnum.LIVE_FEED_DLQ_RESOLVED,
       },
     ]),
+    RedisCacheModule,
     DatabaseModule,
     KafkaApiModule,
-    RedisModule,
     // ClientsModule.register([
     //   {
     //     name: 'LIVE_FEED',

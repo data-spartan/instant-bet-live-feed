@@ -12,18 +12,20 @@ import { MongodbConfigEnum } from 'src/database/mongodb/mongodbConfig.enum';
 export class MongooseConfigService implements MongooseOptionsFactory {
   constructor(private readonly configService: ConfigService) {}
   createMongooseOptions(): MongooseModuleOptions {
-    const dbName = process.env.NODE_ENV !== 'test' ? '' : 'TEST';
-
     try {
-      return {
-        uri: `${this.configService.getOrThrow<string>(
+      const enviroment = process.env.NODE_ENV;
+      const dbSufix = enviroment !== 'test' ? '' : 'TEST';
+      const db_hostname =
+        enviroment === 'production' ? this.configService.getOrThrow<string>(
           MongodbConfigEnum.MONGODB_URL,
-        )}:${this.configService.getOrThrow<string>(
+        ) : 'mongodb://localhost';
+      return {
+        uri: `${db_hostname}:${this.configService.getOrThrow<string>(
           MongodbConfigEnum.MONGODB_PORT,
         )}`,
         dbName: `${this.configService.getOrThrow<string>(
           MongodbConfigEnum.MONGODB_NAME,
-        )}${dbName}`,
+        )}${dbSufix}`,
         user: this.configService.getOrThrow<string>(
           MongodbConfigEnum.MONGODB_USERNAME,
         ),
@@ -42,3 +44,4 @@ export class MongooseConfigService implements MongooseOptionsFactory {
     }
   }
 }
+

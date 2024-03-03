@@ -12,15 +12,23 @@ import { AllExceptionsFilter } from './exception-filters/allExceptions.filter';
 import { MongooseConfigService } from './config/mongoose.config';
 import { DirectoryCreationService } from './shared/dirCreation';
 import { LiveFeedModule } from './api/live-feed/liveFeed.module';
+import { RedisCacheModule } from './redisCache/redisCache.module';
 
 @Module({
   imports: [
     LiveFeedModule,
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: `.env.${process.env.NODE_ENV}`,
+      /*
+      using this.config.get can read proces.env.VAR or .env file if specified
+      dockerized app doesnt read direclty from .env. We pass .env content in docker-compose file
+       and config.get is reading var as proces.env behind the scenes
+       */
+      ignoreEnvFile: process.env.NODE_ENV === 'production' ? true : false,
+      envFilePath: '.env',
     }),
     MongooseModule.forRootAsync({ useClass: MongooseConfigService }),
+    RedisCacheModule,
     GlobalModule,
   ],
   controllers: [AppController],

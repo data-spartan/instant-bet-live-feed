@@ -3,9 +3,9 @@ networks:
   live-feed-network:
     driver: bridge
 
-  #join pre-existing network
-  instantbet-scraper_redis-scraper-network:
-    external: true
+  #join pre-existing network in case of diff service network
+  # instantbet-scraper_redis-scraper-network:
+  #   external: true
 
 services:
   zookeeper-0:
@@ -158,20 +158,33 @@ services:
     volumes:
       - mongodb:/data/db
 
+  redis-live:
+    image: redis:latest
+    container_name: instanbet-livefeed-redis
+    # hostname: ${REDIS_HOSTNAME}
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    ports:
+      - ${REDIS_PORT}:6379
+    volumes:
+      - redis-data:/data
+    networks:
+      - live-feed-network
+    restart: unless-stopped
+
   live-feed-app:
     container_name: live-feed
     build:
       context: ./
       dockerfile: Dockerfile
-      args:
-        - ENV=${ENV}
+      # args:
+      #   - ENV=${ENV}
     env_file:
-      - ${ENV_FILE}
+      - '.env'
     ports:
       - ${APP_PORT}:${APP_PORT}
     networks:
       - live-feed-network
-      - instantbet-scraper_redis-scraper-network
+      # - instantbet-scraper_redis-scraper-network
     volumes:
       - live-feed-app:/usr/src/logs
     restart: unless-stopped
@@ -198,6 +211,8 @@ volumes:
   broker-1-log:
     driver: local
   mongodb:
+    driver: local
+  redis-data:
     driver: local
   live-feed-app:
     driver: local

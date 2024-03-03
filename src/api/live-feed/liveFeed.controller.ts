@@ -25,7 +25,6 @@ import { Console } from 'console';
 import { ConfigService } from '@nestjs/config';
 import { joinObjProps } from 'src/utils/joinObjectProps.utils';
 import { LiveFeedDocument } from 'src/database/mongodb/schemas/liveFeed.schema';
-import { RedisService } from 'src/redis/redis.service';
 import { EVENT_NEW_FIXTURES } from 'src/redis/redis.constants';
 import { LiveFeedTopicPatterns } from 'src/kafka/topic-patterns/liveFeed.patterns';
 import { LiveFeedType } from 'src/types/liveFeed.type';
@@ -33,6 +32,7 @@ import {
   LiveResolvedType,
   ResolvedArrayType,
 } from 'src/types/liveResolved.type';
+import { RedisCacheService } from 'src/redisCache/redisCache.service';
 
 @Controller('feed')
 export class LiveFeedController {
@@ -40,7 +40,7 @@ export class LiveFeedController {
     private readonly liveFeedService: LiveFeedService,
     // @Inject('LIVE_FEED') private readonly clientKafka: ClientKafka,
     //inject if prefer this clientaKafka approach,
-    private readonly redisService: RedisService,
+    private readonly redisService: RedisCacheService,
   ) {}
 
   // @UseInterceptors(CatchExceptionInterceptor)
