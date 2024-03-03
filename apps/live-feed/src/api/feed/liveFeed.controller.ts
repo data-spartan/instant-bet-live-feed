@@ -2,13 +2,13 @@ import { Controller } from '@nestjs/common';
 import { LiveFeedService } from './liveFeed.service';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { RedisCacheService } from '@app/common/redisCache/redisCache.service';
-import { LiveFeedType } from './types/liveFeed.type';
 import { CustomKafkaContext, KafkaCtx } from '@app/common';
-import { ResolvedArrayType } from './types/liveResolved.type';
 import {
   LiveFeedRedisChannel,
   LiveFeedTopicPatterns,
 } from './topic-patterns/liveFeed.patterns';
+import { FixturesArrayDto } from './dto/feed.dto';
+import { ResolvedFixturesDto } from './dto/resolvedFixtures.dto';
 
 @Controller('feed')
 export class LiveFeedController {
@@ -19,14 +19,13 @@ export class LiveFeedController {
     private readonly redisService: RedisCacheService,
   ) {}
 
-  // @UseInterceptors(CatchExceptionInterceptor)
   @EventPattern(LiveFeedTopicPatterns.LiveFeed)
   async liveData(
-    @Payload() data: LiveFeedType,
+    @Payload() { fixtures }: FixturesArrayDto,
     @KafkaCtx()
     { offset, partition, topic, consumer }: CustomKafkaContext,
   ): Promise<void> {
-    const idsToSend = await this.liveFeedService.insertFeed(data, {
+    const idsToSend = await this.liveFeedService.insertFeed(fixtures, {
       topic,
       partition,
       offset,
@@ -50,11 +49,11 @@ export class LiveFeedController {
 
   @EventPattern(LiveFeedTopicPatterns.LiveResolved)
   async liveResolved(
-    @Payload() data: ResolvedArrayType,
+    @Payload() { resolved }: ResolvedFixturesDto,
     @KafkaCtx()
     { offset, partition, topic, consumer, producer }: CustomKafkaContext,
   ): Promise<void> {
-    const resp = await this.liveFeedService.insertResolved(data, producer, {
+    const resp = await this.liveFeedService.insertResolved(resolved, producer, {
       topic,
       partition,
       offset,

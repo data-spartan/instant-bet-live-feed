@@ -6,8 +6,6 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Producer, TopicPartitionOffsetAndMetadata } from 'kafkajs';
 import { Model } from 'mongoose';
-import { LiveFeedType } from './types/liveFeed.type';
-import { ResolvedArrayType } from './types/liveResolved.type';
 import { MongooseQueriesLiveFeed } from './queries/liveFeedService.queries';
 import {
   DlqResolved,
@@ -17,6 +15,8 @@ import {
   LiveFeedResolved,
   LiveFeedResolvedDocument,
 } from '@app/common';
+import { FixturesArrayDto } from './dto/feed.dto';
+import { ResolvedFixturesDto } from './dto/resolvedFixtures.dto';
 
 // import { liveFeedTransaction } from 'src/database/mongodb/transactions_/liveFeed.transactions';
 
@@ -48,7 +48,7 @@ export class LiveFeedService {
     this.producerErrCount = [];
   }
   public async insertFeed(
-    feed: LiveFeedType,
+    feed: FixturesArrayDto['fixtures'],
     topPartOff: TopicPartitionOffsetAndMetadata,
   ): Promise<number[]> {
     let errIndex: number;
@@ -81,7 +81,7 @@ export class LiveFeedService {
   }
 
   public async insertResolved(
-    resolvedData: ResolvedArrayType,
+    resolvedData: ResolvedFixturesDto['resolved'],
     producer: Producer,
     topPartOff: TopicPartitionOffsetAndMetadata,
   ): Promise<boolean> {

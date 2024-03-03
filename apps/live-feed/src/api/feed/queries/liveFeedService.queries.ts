@@ -1,17 +1,14 @@
 import { LiveFeedQueriesType } from '@live-feed/api/feed/types/liveFeedQueries.type';
 
 import { Injectable } from '@nestjs/common';
-import { FixtureType, LiveFeedType } from '../types/liveFeed.type';
-import {
-  LiveResolvedType,
-  ResolvedArrayType,
-} from '../types/liveResolved.type';
+import { FixtureDto, FixturesArrayDto } from '../dto/feed.dto';
+import { ResolvedFixturesDto } from '../dto/resolvedFixtures.dto';
 
 @Injectable()
 export class MongooseQueriesLiveFeed {
-  public async insertFeedQueries(feed: LiveFeedType) {
+  public async insertFeedQueries(feed: FixturesArrayDto['fixtures']) {
     const ids = [];
-    const queries = feed.map((obj: FixtureType) => {
+    const queries = feed.map((obj: FixtureDto) => {
       ids.push(obj.fixtureId);
       const baseUpdate = {
         $setOnInsert: {
@@ -55,10 +52,10 @@ export class MongooseQueriesLiveFeed {
   }
 
   public async insertResolvedQuery(
-    resolvedData: ResolvedArrayType,
+    resolvedData: ResolvedFixturesDto['resolved'],
   ): Promise<LiveFeedQueriesType> {
     const toResolveTickets = [];
-    const queries = resolvedData.map((obj: LiveResolvedType) => ({
+    const queries = resolvedData.map((obj) => ({
       updateOne: {
         filter: {
           _id: obj.fixtureId,

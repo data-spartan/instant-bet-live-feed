@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { WinstonModule } from 'nest-winston';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import {
   KAFKA_CLIENT_ID,
   KAFKA_LIVE_FEED_CONSUMER_GROUP,
@@ -27,6 +27,17 @@ async function bootstrap() {
       : configService.get('KAFKA_BROKERS_DEV');
   const KAFKA_TOPICS = configService.get('KAFKA_TOPICS');
   const CONSUMERS_NUM = Number(configService.get('CONSUMERS_NUM'));
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      disableErrorMessages: false,
+      transform: true,
+      // transformOptions: {
+      //   enableImplicitConversion: true, // This enables automatic type conversion
+      // },
+      whitelist: true,
+    }),
+  );
 
   for (let i = 0; i < CONSUMERS_NUM; i++) {
     app.connectMicroservice<any>(
