@@ -175,7 +175,7 @@ services:
     container_name: live-feed
     build:
       context: ./
-      dockerfile: Dockerfile
+      dockerfile: ./apps/live-feed/Dockerfile
       # args:
       #   - ENV=${ENV}
     env_file:
@@ -186,7 +186,7 @@ services:
       - live-feed-network
       # - instantbet-scraper_redis-scraper-network
     volumes:
-      - live-feed-app:/usr/src/logs
+      - live-feed-logs:/usr/src/logs
     restart: unless-stopped
     depends_on:
       - kafka-0
@@ -214,5 +214,5 @@ volumes:
     driver: local
   redis-data:
     driver: local
-  live-feed-app:
+  live-feed-logs:
     driver: local

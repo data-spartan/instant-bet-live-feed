@@ -18,9 +18,10 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "src/*": ["src/*"],
-      "tests/*": ["src/shared/tests/*"]
-    }
+      "@live-feed*": ["apps/live-feed/src*"],
+      "@app/common": ["libs/common/src"],
+      "@app/common/*": ["libs/common/src/*"]
+    },
   },
   "watchOptions": { "excludeFiles": ["src/logs"] }
 }
