@@ -27,22 +27,6 @@ const prodLogger = new transports.File({
   maxFiles: Number(process.env.LOG_MAXFILES),
 });
 
-// const chooseTransport = (env: string): any[] => {
-//   const transport = [];
-//   const console = new transports.Console();
-//   if (env === 'test') {
-//     transport.push(console);
-//     return transport;
-//   }
-//   const fileTransport = new transports.File({
-//     filename: 'app.log',
-//     dirname: `${process.env.APP_BASE_DIR}${process.env.LOG_DIR}`,
-//     maxsize: Number(process.env.LOG_MAXSIZE),
-//     maxFiles: Number(process.env.LOG_MAXFILES),
-//   });
-//   transport.push(console, fileTransport);
-//   return transport;
-// };
 
 export const WinstonLogCreator = (logLevel: logLevel) => {
   const logger = createLogger({

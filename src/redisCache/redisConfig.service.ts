@@ -14,7 +14,6 @@ export class RedisConfigService implements RedisModuleOptionsFactory {
     const enviroment = process.env.NODE_ENV;
     const hostname =
       enviroment === 'production' ? process.env.REDIS_HOST : 'localhost';
-      console.log(hostname,enviroment,process.env.REDIS_HOST)
     return {
       type: this.config.get<any>(RedisConfigEnum.REDIS_TYPE),
       options: {
