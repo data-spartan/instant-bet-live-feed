@@ -74,13 +74,13 @@ export class FixtureDto {
   @IsString()
   competitor2Id: string;
 
-  @IsOptional()
   @IsObject()
+  @IsOptional()
   scoreboard?: object;
 
-  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => GamesDto)
+  @IsOptional()
   games?: GamesDto[];
 
   @IsDate()
@@ -88,8 +88,8 @@ export class FixtureDto {
 }
 
 export class FixturesArrayDto {
-  @IsArray()
   @ValidateNested({ each: true })
   @Type(() => FixtureDto)
+  @IsArray()
   fixtures: FixtureDto[];
 }

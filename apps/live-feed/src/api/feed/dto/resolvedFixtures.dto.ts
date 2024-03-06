@@ -1,5 +1,15 @@
-import { IsString, IsArray, IsNumber, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsArray,
+  IsNumber,
+  ValidateNested,
+  IsOptional,
+} from 'class-validator';
 import { Type } from 'class-transformer';
+import {
+  ResolvedFixtureStatus,
+  ResolvedGameStatus,
+} from '../types/liveResolved.type';
 
 export class ResolvedGameDto {
   @IsString()
@@ -9,7 +19,7 @@ export class ResolvedGameDto {
   type: string;
 
   @IsString()
-  status: 'won' | 'lost';
+  status: ResolvedGameStatus;
 }
 
 export class ResolvedFixtureDto {
@@ -17,11 +27,12 @@ export class ResolvedFixtureDto {
   fixtureId: number;
 
   @IsString()
-  status: 'In progress' | 'Ended';
+  status: ResolvedFixtureStatus;
 
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ResolvedFixtureDto)
+  @IsOptional()
   resolved: ResolvedFixtureDto[];
 }
 

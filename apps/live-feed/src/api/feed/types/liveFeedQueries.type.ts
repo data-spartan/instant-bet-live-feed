@@ -1,8 +1,6 @@
-import { Mongoose, Query } from 'mongoose';
-
 export type LiveFeedQueriesType = {
-  queries: Object[];
-  query?: Object;
+  queries: object[];
+  query?: object;
   toResolveTickets?: number[];
   ids?: number[];
 };
