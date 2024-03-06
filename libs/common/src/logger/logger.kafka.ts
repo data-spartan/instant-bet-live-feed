@@ -20,7 +20,7 @@ const toWinstonLogLevel = (level: logLevel) => {
 
 export const WinstonLogCreator = (
   logLevel: logLevel,
-  path: string = './apps/live-feed',
+  path: string = './apps/feed',
 ) => {
   const devLogger = new transports.Console();
 

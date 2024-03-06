@@ -5,7 +5,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import {
   KAFKA_CLIENT_ID,
   KAFKA_LIVE_FEED_CONSUMER_GROUP,
-} from './api/feed/kafka.constants';
+} from './api/live-feed/kafka.constants';
 import { loggerConfig } from '@app/common/logger/loggerApp.config';
 import { FeedModule } from './feed.module';
 import { configKafka } from '@app/common/kafka/kafkaServer.config';
@@ -13,7 +13,7 @@ import { configKafka } from '@app/common/kafka/kafkaServer.config';
 async function bootstrap() {
   const app = await NestFactory.create(FeedModule, {
     logger: WinstonModule.createLogger({
-      instance: loggerConfig('./apps/live-feed'),
+      instance: loggerConfig('./apps/feed'),
     }),
   }); //to use global logger in other services need to put nestjscommon Logger as provider in each module you want to use logger
   app;
@@ -46,7 +46,7 @@ async function bootstrap() {
         KAFKA_TOPICS,
         KAFKA_CLIENT_ID,
         KAFKA_LIVE_FEED_CONSUMER_GROUP,
-        './apps/live-feed',
+        './apps/feed',
       ),
       {
         inheritAppConfig: true, //in hybrid apps need to add this bcs of enabling global exceptions handlers, pipes...

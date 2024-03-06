@@ -18,7 +18,7 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@live-feed*": ["apps/live-feed/src*"],
+      "@feed*": ["apps/feed/src*"],
       "@app/common": ["libs/common/src"],
       "@app/common/*": ["libs/common/src/*"]
     },

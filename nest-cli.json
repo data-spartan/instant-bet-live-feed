@@ -1,22 +1,22 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "apps/live-feed/src",
+  "sourceRoot": "apps/feed/src",
   "monorepo": true,
-  "root": "apps/live-feed",
+  "root": "apps/feed",
   "compilerOptions": {
     "webpack": true,
-    "tsConfigPath": "apps/live-feed/tsconfig.app.json",
+    "tsConfigPath": "apps/feed/tsconfig.app.json",
     "deleteOutDir": false
   },
   "projects": {
     "live-feed": {
       "type": "application",
-      "root": "apps/live-feed",
+      "root": "apps/feed",
       "entryFile": "main",
-      "sourceRoot": "apps/live-feed/src",
+      "sourceRoot": "apps/feed/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/live-feed/tsconfig.app.json"
+        "tsConfigPath": "apps/feed/tsconfig.app.json"
       }
     },
     "common": {

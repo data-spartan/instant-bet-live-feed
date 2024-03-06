@@ -175,7 +175,7 @@ services:
     container_name: live-feed
     build:
       context: ./
-      dockerfile: ./apps/live-feed/Dockerfile
+      dockerfile: ./apps/feed/Dockerfile
       # args:
       #   - ENV=${ENV}
     env_file:

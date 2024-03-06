@@ -1,8 +1,7 @@
-import { LiveFeedQueriesType } from '@live-feed/api/feed/types/liveFeedQueries.type';
-
 import { Injectable } from '@nestjs/common';
 import { FixtureDto, FixturesArrayDto } from '../dto/feed.dto';
 import { ResolvedFixturesDto } from '../dto/resolvedFixtures.dto';
+import { LiveFeedQueriesType } from '../types/liveFeedQueries.type';
 
 @Injectable()
 export class MongooseQueriesLiveFeed {

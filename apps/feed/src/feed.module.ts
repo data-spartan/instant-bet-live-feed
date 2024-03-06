@@ -7,7 +7,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { APP_FILTER } from '@nestjs/core';
 // import { RpcExcFilter } from './exception-filters/kafkaException.filter';
 import { GlobalModule } from './global.module';
-import { LiveFeedModule } from './api/feed/liveFeed.module';
+import { LiveFeedModule } from './api/live-feed/liveFeed.module';
 import { MongooseConfigService } from '@app/common/mongoConf/mongoose.config';
 import { RedisCacheModule } from '@app/common/redisCache/redisCache.module';
 import { AllExceptionsFilter } from '@app/common';

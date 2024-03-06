@@ -26,4 +26,4 @@ RUN npm run build
 
 USER node
 # Start the server using the production build
-CMD [ "node", "dist/apps/live-feed/main.js" ]
+CMD [ "node", "dist/apps/feed/main.js" ]
