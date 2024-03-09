@@ -2,7 +2,7 @@ import { logLevel } from 'kafkajs';
 import { transports, createLogger } from 'winston';
 //  import 'dotenv/config';
 import { config } from 'dotenv';
-config({ path: './' });
+config();
 
 const toWinstonLogLevel = (level: logLevel) => {
   switch (level) {

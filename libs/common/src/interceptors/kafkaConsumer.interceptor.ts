@@ -3,9 +3,7 @@ import {
   ExecutionContext,
   CallHandler,
   NestInterceptor,
-  Logger,
 } from '@nestjs/common';
-import { KafkaContext } from '@nestjs/microservices';
 import { Observable } from 'rxjs';
 
 @Injectable()
@@ -16,7 +14,6 @@ export class KafkaLoggingInterceptor implements NestInterceptor {
     const ctx = context.switchToRpc().getContext();
     const topic = ctx.getTopic();
     ctx.getConsumer().logger().info(`Consumed topic: ${topic}`);
-    // const request = context.switchToHttp().getRequest();
 
     return next.handle();
   }

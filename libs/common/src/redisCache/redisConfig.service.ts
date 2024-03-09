@@ -13,13 +13,16 @@ export class RedisConfigService implements RedisModuleOptionsFactory {
   createRedisModuleOptions(): RedisModuleOptions | Promise<RedisModuleOptions> {
     const enviroment = process.env.NODE_ENV;
     const hostname =
-      enviroment === 'production' ? process.env.REDIS_HOST : 'localhost';
+      enviroment !== 'production' ? 'localhost' : process.env.REDIS_HOST;
     return {
       type: this.config.get<any>(RedisConfigEnum.REDIS_TYPE),
       options: {
         db: enviroment === 'test' ? 1 : 0,
         host: hostname,
-        port: +this.config.get<number>(RedisConfigEnum.REDIS_PORT),
+        port:
+          enviroment !== 'production'
+            ? +this.config.get<number>(RedisConfigEnum.REDIS_PORT_LOCAL)
+            : +this.config.get<number>(RedisConfigEnum.REDIS_PORT),
         password: this.config.get<string>(RedisConfigEnum.REDIS_PASSWORD),
       },
     };

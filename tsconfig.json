@@ -23,5 +23,5 @@
       "@app/common/*": ["libs/common/src/*"]
     },
   },
-  "watchOptions": { "excludeFiles": ["src/logs"] }
+  "watchOptions": { "excludeFiles": ["apps/feed/logs"] }
 }

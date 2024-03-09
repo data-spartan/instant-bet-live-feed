@@ -1,10 +1,6 @@
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Injectable, Logger } from '@nestjs/common';
 import Redis from 'ioredis';
-import {
-  FORGOT_PASSWORD_EXPIRES,
-  VERIFY_EMAIL_EXPIRES,
-} from './redisCache.consts';
 
 @Injectable()
 export class RedisCacheService {

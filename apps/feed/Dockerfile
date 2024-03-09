@@ -17,8 +17,7 @@ COPY --chown=node:node package*.json ./
 RUN npm ci && npm cache clean --force
 
 # Bundle app source
-# COPY --chown=node:node . .
-COPY . .
+COPY --chown=node:node . .
 # RUN chown -R node /usr/src/app
 
 # Creates a "dist" folder with the production build

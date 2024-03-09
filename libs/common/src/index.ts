@@ -1,5 +1,5 @@
 export * from './exception-filters/allExceptions.filter';
-export * from './exception-filters/kafkaException.filter';
+export * from './exception-filters/rpcException.filter';
 
 export * from './types/redis.type';
 export * from './types/error.type';
