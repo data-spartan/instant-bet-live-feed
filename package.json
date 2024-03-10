@@ -8,7 +8,7 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "cross-env NODE_ENV=development TZ=UTC nest start",
+    "start": "TZ=UTC nest start",
     "docker:dev": "docker-compose up -d zookeeper-0 zookeeper-1 kafka-0 kafka-1",
     "docker:stop": "docker-compose stop zookeeper-0 zookeeper-1 kafka-0 kafka-1",
     "docker:start": "docker-compose start zookeeper-0 zookeeper-1 kafka-0 kafka-1",

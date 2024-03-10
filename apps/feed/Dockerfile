@@ -21,8 +21,11 @@ COPY --chown=node:node . .
 # RUN chown -R node /usr/src/app
 
 # Creates a "dist" folder with the production build
-RUN npm run build
+RUN npm run build feed
 
 USER node
 # Start the server using the production build
-CMD [ "node", "dist/apps/feed/main.js" ]
+CMD if [ "$NODE_ENV" = "production" ]; \
+then npm run start live-feed; \
+else npm run start:dev live-feed; \
+fi

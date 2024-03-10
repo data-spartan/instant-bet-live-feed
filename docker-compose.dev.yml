@@ -198,12 +198,16 @@ services:
       - live-feed-network
     volumes:
       - live-feed-logs:/usr/src/logs
+      - .:/usr/src
+      - /usr/src/node_modules
     restart: unless-stopped
     depends_on:
       - kafka-0
       - kafka-1
       - mongodb-live-feed
       - redis-live
+
+
 
 volumes:
   zk-0-data:

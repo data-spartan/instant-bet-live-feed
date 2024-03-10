@@ -16,7 +16,6 @@ InstantBet is a nodejs backend app for a real-time sports betting(e.g BWIN), mad
 - instantbet-BE is real-time sports betting data feed hub which is responsible for processing and storing matches, markets, statistics and routing to appropriate services.
 
 ### Features Overview:
-
 - Websockets enables real-time sports betting - **in progress**
 - Kafka which enables scalable, failsafe and extremely fast data exchange between services
 - Dead letter queue(Kafka) for extremely sensitive failed data actions(payments, resolving markets ...) - **in progress**
@@ -27,6 +26,7 @@ InstantBet is a nodejs backend app for a real-time sports betting(e.g BWIN), mad
 - Redis Pub/Sub enables notification to web-socket-live-feed of newly/updated arrived live betting data and emitting to all subscribed clients - **in progress**
 - Notification service consisting of phone and email notifications using Twilio and Nodemailer respectively - **in progress**
 - Winston Logger
+- Docker live reload
 - Sentry integration - **in progress**
 
 ### Architecture diagram:
