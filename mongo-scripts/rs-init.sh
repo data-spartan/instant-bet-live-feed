@@ -1,7 +1,8 @@
 
-DELAY=10
+DELAY=30
 
 mongosh <<EOF
+use admin
 var config = {
     "_id": "dbrs",
     "version": 1,
@@ -31,4 +32,11 @@ echo "****** Waiting for ${DELAY} seconds for replicaset configuration to be app
 
 sleep $DELAY
 
-# mongosh < scripts/init.js
+mongosh <<EOF
+use admin
+db.createUser({
+  user: 'root',
+  pwd: '123',
+  roles: [{ role: 'root', db: 'admin' }],
+});
+EOF

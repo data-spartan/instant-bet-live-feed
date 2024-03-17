@@ -7,7 +7,6 @@ import {
   IsOptional,
   IsObject,
   ValidateNested,
-  IsArray,
 } from 'class-validator';
 
 export class GamesDto {
@@ -89,6 +88,5 @@ export class FixtureDto {
 export class FixturesArrayDto {
   @ValidateNested({ each: true })
   @Type(() => FixtureDto)
-  @IsArray()
   fixtures: FixtureDto[];
 }

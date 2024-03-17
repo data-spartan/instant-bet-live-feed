@@ -147,42 +147,47 @@ services:
   mongodb-live-feed-1:
     image: mongo:latest
     container_name: mongodb-live-feed-1
+    # command: [--auth]
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+      MONGO_INITDB_DATABASE: admin
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
     ports:
-      - 27017:${MONGODB_PORT}
-    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ]
+      - 27017:27017
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs","--port", "27017" ]
     networks:
       - live-feed-network
     restart: unless-stopped
     volumes:
       - mongodb-1:/data/db
       - ./mongo-scripts/rs-init.sh:/scripts/rs-init.sh
+    # command: mongod
     # healthcheck:
     #   test: echo 'db.runCommand({serverStatus:1}).ok' | mongosh admin -u $MONGODB_USERNAME -p $MONGODB_PASSWORD --quiet | grep 1
     #   interval: 5s
     #   timeout: 5s
     #   retries: 3
     #   start_period: 15s
-    depends_on:
-      - mongodb-live-feed-2
-      - mongodb-live-feed-3        
+    # depends_on:
+    #   - mongodb-live-feed-2
+    #   - mongodb-live-feed-3        
     
   mongodb-live-feed-2:
     image: mongo:latest
     container_name: mongodb-live-feed-2
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+      MONGO_INITDB_DATABASE: admin
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
     ports:
-      - 27018:${MONGODB_PORT}
-    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ]
+      - 27018:27017
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ,"--port", "27017"]
     networks:
       - live-feed-network
     restart: unless-stopped
     volumes:
       - mongodb-2:/data/db
+    # command: mongod
     # healthcheck:
     #   test: echo 'db.runCommand({serverStatus:1}).ok' | mongosh admin -u $MONGODB_USERNAME -p $MONGODB_PASSWORD --quiet | grep 1
     #   interval: 5s
@@ -195,16 +200,18 @@ services:
     image: mongo:latest
     container_name: mongodb-live-feed-3
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+      MONGO_INITDB_DATABASE: admin
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
     ports:
-      - 27019:${MONGODB_PORT}
-    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ]
+      - 27019:27017
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ,"--port", "27017"]
     networks:
       - live-feed-network
     restart: unless-stopped
     volumes:
       - mongodb-3:/data/db
+    # command: mongod
     # healthcheck:
     #   test: echo 'db.runCommand({serverStatus:1}).ok' | mongosh admin -u $MONGODB_USERNAME -p $MONGODB_PASSWORD --quiet | grep 1
     #   interval: 5s

@@ -1,6 +1,5 @@
 import {
   IsString,
-  IsArray,
   IsNumber,
   ValidateNested,
   IsOptional,
@@ -30,15 +29,13 @@ export class ResolvedFixtureDto {
   @IsEnum(ResolvedFixtureStatus)
   status: ResolvedFixtureStatus;
 
-  @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => ResolvedFixtureDto)
+  @Type(() => ResolvedGameDto)
   @IsOptional()
-  resolved: ResolvedFixtureDto[];
+  resolved: ResolvedGameDto[];
 }
 
 export class ResolvedFixturesDto {
-  @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ResolvedFixtureDto)
   resolved: ResolvedFixtureDto[];
