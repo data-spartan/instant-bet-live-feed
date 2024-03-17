@@ -18,18 +18,21 @@ export class MongooseConfigService implements MongooseOptionsFactory {
       );
 
       return {
-        uri: `${db_hostname}:${this.configService.getOrThrow<string>(
-          MongodbConfigEnum.MONGODB_PORT,
-        )}`,
+        uri: this.configService.getOrThrow<string>(
+          MongodbConfigEnum.MONGODB_URL,
+        ),
+        // uri: `${db_hostname}:${this.configService.getOrThrow<string>(
+        //   MongodbConfigEnum.MONGODB_PORT,
+        // )}`,
         dbName: `${this.configService.getOrThrow<string>(
           MongodbConfigEnum.MONGODB_NAME,
         )}${dbSufix}`,
-        user: this.configService.getOrThrow<string>(
-          MongodbConfigEnum.MONGODB_USERNAME,
-        ),
-        pass: this.configService.getOrThrow<string>(
-          MongodbConfigEnum.MONGODB_PASSWORD,
-        ),
+        // user: this.configService.getOrThrow<string>(
+        //   MongodbConfigEnum.MONGODB_USERNAME,
+        // ),
+        // pass: this.configService.getOrThrow<string>(
+        //   MongodbConfigEnum.MONGODB_PASSWORD,
+        // ),
         retryAttempts: 10,
         autoCreate: true,
         //   autoIndex: false,

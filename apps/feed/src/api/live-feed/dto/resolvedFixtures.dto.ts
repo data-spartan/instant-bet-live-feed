@@ -4,6 +4,7 @@ import {
   IsNumber,
   ValidateNested,
   IsOptional,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
@@ -18,7 +19,7 @@ export class ResolvedGameDto {
   @IsString()
   type: string;
 
-  @IsString()
+  @IsEnum(ResolvedGameStatus)
   status: ResolvedGameStatus;
 }
 
@@ -26,7 +27,7 @@ export class ResolvedFixtureDto {
   @IsNumber()
   fixtureId: number;
 
-  @IsString()
+  @IsEnum(ResolvedFixtureStatus)
   status: ResolvedFixtureStatus;
 
   @IsArray()

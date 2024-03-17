@@ -6,20 +6,19 @@ import {
   IsString,
   IsOptional,
   IsObject,
-  IsDate,
   ValidateNested,
   IsArray,
 } from 'class-validator';
 
 export class GamesDto {
-  @IsNumber()
-  OddsTypeName: number;
+  @IsString()
+  OddsTypeName: string;
 
   @IsNumber()
   quote: number;
 
-  @IsNumber()
-  sourceGameId: number;
+  @IsString()
+  sourceGameId: string;
 
   @IsBoolean()
   locked: boolean;
@@ -83,7 +82,7 @@ export class FixtureDto {
   @IsOptional()
   games?: GamesDto[];
 
-  @IsDate()
+  @IsString()
   sentTime: Date;
 }
 

@@ -4,7 +4,7 @@ import { AppService } from './feed.service';
 import { AppController } from './feed.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { APP_FILTER } from '@nestjs/core';
-import { GlobalModule } from './global.module';
+// import { GlobalModule } from './global.module';
 import { LiveFeedModule } from './api/live-feed/liveFeed.module';
 import { MongooseConfigService } from '@app/common/mongoConf/mongoose.config';
 import { RedisCacheModule } from '@app/common/redisCache/redisCache.module';
@@ -62,7 +62,7 @@ import * as Joi from 'joi';
     }),
     MongooseModule.forRootAsync({ useClass: MongooseConfigService }),
     RedisCacheModule,
-    GlobalModule,
+    // GlobalModule,
   ],
   controllers: [AppController],
   providers: [
