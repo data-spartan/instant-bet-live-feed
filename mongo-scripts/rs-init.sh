@@ -35,8 +35,8 @@ sleep $DELAY
 mongosh --host mongodb-live-feed-1:27017 <<EOF
 use admin
 db.createUser({
-  user: 'root',
-  pwd: '123',
+  user: '${USER}',
+  pwd: '${PASSWORD}',
   roles: [{ role: 'root', db: 'admin' }],
 });
 EOF
