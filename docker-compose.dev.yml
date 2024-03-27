@@ -150,8 +150,8 @@ services:
     # command: [--auth]
     environment:
       MONGO_INITDB_DATABASE: admin
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: root
+      # MONGO_INITDB_ROOT_USERNAME: root
+      # MONGO_INITDB_ROOT_PASSWORD: root
     ports:
       - 27017:27017
     entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs","--port", "27017" ]
@@ -160,7 +160,20 @@ services:
     restart: unless-stopped
     volumes:
       - mongodb-1:/data/db
-      - ./mongo-scripts/rs-init.sh:/scripts/rs-init.sh
+
+  mongosetup:
+    image: mongo:latest
+    depends_on:
+      - mongodb-live-feed-1
+      - mongodb-live-feed-2
+      - mongodb-live-feed-3
+    restart: "no"
+    networks:
+      - live-feed-network
+    volumes:
+      - ./mongo-scripts:/mongo-scripts
+    entrypoint: [ "bash", "-c", "mongo-scripts/rs-init.sh"]      
+
     # command: mongod
     # healthcheck:
     #   test: echo 'db.runCommand({serverStatus:1}).ok' | mongosh admin -u $MONGODB_USERNAME -p $MONGODB_PASSWORD --quiet | grep 1

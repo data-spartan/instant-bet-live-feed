@@ -27,12 +27,12 @@ export class MongooseConfigService implements MongooseOptionsFactory {
         dbName: `${this.configService.getOrThrow<string>(
           MongodbConfigEnum.MONGODB_NAME,
         )}${dbSufix}`,
-        // user: this.configService.getOrThrow<string>(
-        //   MongodbConfigEnum.MONGODB_USERNAME,
-        // ),
-        // pass: this.configService.getOrThrow<string>(
-        //   MongodbConfigEnum.MONGODB_PASSWORD,
-        // ),
+        user: this.configService.getOrThrow<string>(
+          MongodbConfigEnum.MONGODB_USERNAME,
+        ),
+        pass: this.configService.getOrThrow<string>(
+          MongodbConfigEnum.MONGODB_PASSWORD,
+        ),
         retryAttempts: 10,
         autoCreate: true,
         //   autoIndex: false,

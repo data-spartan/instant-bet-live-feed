@@ -1,7 +1,7 @@
 
 DELAY=30
 
-mongosh <<EOF
+mongosh --host mongodb-live-feed-1:27017 <<EOF
 use admin
 var config = {
     "_id": "dbrs",
@@ -32,7 +32,7 @@ echo "****** Waiting for ${DELAY} seconds for replicaset configuration to be app
 
 sleep $DELAY
 
-mongosh <<EOF
+mongosh --host mongodb-live-feed-1:27017 <<EOF
 use admin
 db.createUser({
   user: 'root',
