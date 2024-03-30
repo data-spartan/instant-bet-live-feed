@@ -41,7 +41,7 @@ services:
       ZOOKEEPER_SERVER_ID: 1
       ZOOKEEPER_CLIENT_PORT: 2181
       # ZOOKEEPER_PEER_PORT: 2888
-      # ZOOKEEPER_LEADER_PORT: 3888.
+      # ZOOKEEPER_LEADER_PORT: 3888
       ZOOKEEPER_TICK_TIME: 2000
       ZOOKEEPER_DATA_DIR: /var/lib/zookeeper
       LOG_DIR: /var/lib/zookeeper/log
@@ -160,7 +160,7 @@ services:
     volumes:
       - mongodb-1:/data/db   
 
-    healthcheck:
+    healthcheck: #need to add $$ before env var
       test: echo 'db.runCommand({serverStatus:1}).ok' | mongosh admin -u $$MONGODB_USERNAME -p $$MONGODB_PASSWORD --quiet | grep 1
       interval: 5s
       timeout: 5s
@@ -215,7 +215,22 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
-
+    
+  mongo-setup:
+    image: mongo:latest
+    depends_on:
+      - mongodb-live-feed-1
+      - mongodb-live-feed-2
+      - mongodb-live-feed-3
+    restart: "no"
+    networks:
+      - live-feed-network
+    volumes:
+      - ./mongo-scripts:/mongo-scripts
+    environment:
+      - USER=$MONGODB_USERNAME #specify envs to be used in rs-init.sh
+      - PASSWORD=$MONGODB_PASSWORD
+    entrypoint: [ "bash", "-c", "mongo-scripts/rs-init.sh"]   
 
   redis-live:
     image: redis:latest
@@ -239,7 +254,7 @@ services:
     container_name: live-feed
     build:
       context: ./
-      target: production
+      target: dev
       dockerfile: ./apps/feed/Dockerfile
       # args:
       #   - ENV=${ENV}
@@ -251,11 +266,13 @@ services:
       - live-feed-network
     volumes:
       - live-feed-logs:/usr/src/logs
+      - .:/usr/src
+      - /usr/src/node_modules
     restart: unless-stopped
     depends_on:
       - kafka-0
       - kafka-1
-      - mongodb-live-feed
+      - mongodb-live-feed-1
       - redis-live
 
 volumes:
@@ -275,7 +292,11 @@ volumes:
     driver: local
   broker-1-log:
     driver: local
-  mongodb:
+  mongodb-1:
+    driver: local
+  mongodb-2:
+    driver: local
+  mongodb-3:
     driver: local
   redis-data:
     driver: local

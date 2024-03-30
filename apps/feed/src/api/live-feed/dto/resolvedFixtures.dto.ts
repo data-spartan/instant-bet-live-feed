@@ -1,9 +1,9 @@
 import {
   IsString,
-  IsArray,
   IsNumber,
   ValidateNested,
   IsOptional,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
@@ -18,7 +18,7 @@ export class ResolvedGameDto {
   @IsString()
   type: string;
 
-  @IsString()
+  @IsEnum(ResolvedGameStatus)
   status: ResolvedGameStatus;
 }
 
@@ -26,18 +26,16 @@ export class ResolvedFixtureDto {
   @IsNumber()
   fixtureId: number;
 
-  @IsString()
+  @IsEnum(ResolvedFixtureStatus)
   status: ResolvedFixtureStatus;
 
-  @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => ResolvedFixtureDto)
+  @Type(() => ResolvedGameDto)
   @IsOptional()
-  resolved: ResolvedFixtureDto[];
+  resolved: ResolvedGameDto[];
 }
 
 export class ResolvedFixturesDto {
-  @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ResolvedFixtureDto)
   resolved: ResolvedFixtureDto[];

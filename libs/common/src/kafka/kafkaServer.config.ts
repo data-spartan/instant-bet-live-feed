@@ -17,6 +17,7 @@ export const configKafka = (
       clientId: clientId,
       brokers: brokers.split(','),
       logLevel: logLevel.INFO,
+      path,
       logCreator: WinstonLogCreator,
     },
     consumer: {

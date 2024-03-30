@@ -70,38 +70,38 @@ export class LiveFeedController {
     }
   }
 
-  @EventPattern(LiveFeedTopicPatterns.ResolveTickets)
-  async liveGames(
-    @Payload() data,
-    @KafkaCtx()
-    { offset, partition, topic, consumer }: CustomKafkaContext,
-  ): Promise<void> {
-    await consumer.commitOffsets([{ topic, partition, offset }]);
-    //TODO Move everthing related to tickets resolving to separate microservice(betting-engine)
-  }
+  // @EventPattern(LiveFeedTopicPatterns.ResolveTickets)
+  // async liveGames(
+  //   @Payload() data,
+  //   @KafkaCtx()
+  //   { offset, partition, topic, consumer }: CustomKafkaContext,
+  // ): Promise<void> {
+  //   await consumer.commitOffsets([{ topic, partition, offset }]);
+  //   //TODO Move everthing related to tickets resolving to separate microservice(betting-engine)
+  // }
 
-  @EventPattern(LiveFeedTopicPatterns.DlqResolved)
-  async dlqResolved(
-    @Payload() data,
-    @KafkaCtx()
-    { offset, partition, topic, consumer }: CustomKafkaContext,
-  ) {
-    const resp = await this.liveFeedService.insertDlqResolved(data, {
-      topic,
-      partition,
-      offset,
-    });
+  // @EventPattern(LiveFeedTopicPatterns.DlqResolved)
+  // async dlqResolved(
+  //   @Payload() data,
+  //   @KafkaCtx()
+  //   { offset, partition, topic, consumer }: CustomKafkaContext,
+  // ) {
+  //   const resp = await this.liveFeedService.insertDlqResolved(data, {
+  //     topic,
+  //     partition,
+  //     offset,
+  //   });
 
-    if (resp) {
-      consumer.commitOffsets([
-        {
-          topic,
-          partition,
-          offset,
-        },
-      ]);
-      // console.log('COMITTED DLQ RESOLVED');
-      //TODO Move everthing related to tickets resolving to separate microservice(betting-engine)
-    }
-  }
+  //   if (resp) {
+  //     consumer.commitOffsets([
+  //       {
+  //         topic,
+  //         partition,
+  //         offset,
+  //       },
+  //     ]);
+  //     // console.log('COMITTED DLQ RESOLVED');
+  //     //TODO Move everthing related to tickets resolving to separate microservice(betting-engine)
+  //   }
+  // }
 }

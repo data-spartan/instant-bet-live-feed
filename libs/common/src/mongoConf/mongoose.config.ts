@@ -13,14 +13,17 @@ export class MongooseConfigService implements MongooseOptionsFactory {
     try {
       const enviroment = process.env.NODE_ENV;
       const dbSufix = enviroment !== 'test' ? '' : 'TEST';
-      const db_hostname =
-        enviroment === 'production'
-          ? this.configService.getOrThrow<string>(MongodbConfigEnum.MONGODB_URL)
-          : 'mongodb://localhost';
+      const db_hostname = this.configService.getOrThrow<string>(
+        MongodbConfigEnum.MONGODB_URL,
+      );
+
       return {
-        uri: `${db_hostname}:${this.configService.getOrThrow<string>(
-          MongodbConfigEnum.MONGODB_PORT,
-        )}`,
+        uri: this.configService.getOrThrow<string>(
+          MongodbConfigEnum.MONGODB_URL,
+        ),
+        // uri: `${db_hostname}:${this.configService.getOrThrow<string>(
+        //   MongodbConfigEnum.MONGODB_PORT,
+        // )}`,
         dbName: `${this.configService.getOrThrow<string>(
           MongodbConfigEnum.MONGODB_NAME,
         )}${dbSufix}`,

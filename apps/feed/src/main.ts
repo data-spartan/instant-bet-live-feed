@@ -21,12 +21,9 @@ async function bootstrap() {
   const appPort = Number(configService.get('APP_PORT'));
   const appName: string = configService.get('APP_NAME');
 
-  const KAFKA_BROKERS =
-    process.env.NODE_ENV !== 'dev'
-      ? configService.get('KAFKA_BROKERS')
-      : configService.get('KAFKA_BROKERS_DEV');
+  const KAFKA_BROKERS = configService.get('KAFKA_BROKERS');
   const KAFKA_TOPICS = configService.get('KAFKA_TOPICS');
-  const CONSUMERS_NUM = Number(configService.get('CONSUMERS_NUM'));
+  const CONSUMERS_NUM = +configService.get('CONSUMERS_NUM');
 
   app.useGlobalPipes(
     new ValidationPipe({

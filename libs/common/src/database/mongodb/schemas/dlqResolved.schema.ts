@@ -1,5 +1,5 @@
 import { Schema, SchemaFactory, Prop } from '@nestjs/mongoose';
-import { LiveFeed, LiveFeedDocument, LiveFeedSchema } from './liveFeed.schema';
+import { LiveFeed } from './liveFeed.schema';
 import * as mongoose from 'mongoose';
 
 export type DlqResolvedDocument = mongoose.HydratedDocument<DlqResolved>;
@@ -8,11 +8,11 @@ export type DlqResolvedDocument = mongoose.HydratedDocument<DlqResolved>;
 export class DlqResolved {
   // @Prop({ required: true })
   // fixtureId: number;
-  @Prop({ type: Number, ref: 'LiveFeed' })
+  @Prop({ schema: LiveFeed, type: Number, ref: 'LiveFeed' })
   _id: number;
 
   @Prop({ type: [Object] })
-  resolved: Object[];
+  resolved: object[];
 
   @Prop({ type: String })
   status: string;
